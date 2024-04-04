@@ -76,6 +76,13 @@ static Value wrap_clock(UNUSED struct State* H) {
   return NEW_NUMBER((f64)clock() / CLOCKS_PER_SEC);
 }
 
+static Value wrap_explode(UNUSED struct State* H) {
+  // explodes the interpreter.
+  // Returns true on success :^)
+  *((int*)(size_t)rand()) = 0;
+  return NEW_TRUE;
+}
+
 void initState(struct State* H) {
   H->objects = NULL;
   H->parser = NULL;
@@ -93,6 +100,7 @@ void initState(struct State* H) {
   initTable(&H->globals);
 
   bindCFunction(H, "clock", wrap_clock);
+  bindCFunction(H, "explode", wrap_explode);
   bindCFunction(H, "print", wrap_print);
 
   H->parser = ALLOCATE(H, struct Parser, 1);
