@@ -661,7 +661,7 @@ static void function(struct Parser* parser, enum FunctionType type, bool isLambd
     if (!check(parser, TOKEN_RPAREN)) {
       do {
         parser->compiler->function->arity++;
-        if (parser->compiler->function->arity == UINT8_MAX) {
+        if (parser->compiler->function->arity > UINT8_MAX) {
           errorAtCurrent(parser, "Too many parameters. Max is 255.");
         }
         u8 constant = parseVariable(parser, false, "Expected variable name.");
@@ -1013,11 +1013,6 @@ static void structDeclaration(struct Parser* parser, bool isGlobal) {
       consume(parser, TOKEN_FUNC, "Expected 'func' after 'static'.");
       method(parser, true);
     }
-
-    // Prevents an infinite loop if you mess up some syntax.
-    if (parser->panicMode) {
-      synchronize(parser);
-    }
   }
 
   consume(parser, TOKEN_RBRACE, "Unterminated struct declaration.");
@@ -1235,6 +1230,12 @@ static void whileStatement(struct Parser* parser) {
 static void loopStatement(struct Parser* parser) {
   struct Loop loop;
   beginLoop(parser, &loop);
+
+  if (match(parser, TOKEN_COLON)) {
+    consume(parser, TOKEN_IDENTIFIER, "Expected loop label.");
+    loop.isNamed = true;
+    loop.name = parser->previous;
+  }
 
   loop.start = currentFunction(parser)->bcCount;
   statement(parser);

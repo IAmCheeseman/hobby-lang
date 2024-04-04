@@ -213,7 +213,7 @@ void printObject(Value value) {
       printf("<enum %s>", AS_ENUM(value)->name->chars);
       break;
     case OBJ_ARRAY:
-      printf("<array %p>", AS_OBJ(value));
+      printf("<array>");
       break;
   }
 }
