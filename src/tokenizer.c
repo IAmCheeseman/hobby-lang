@@ -5,6 +5,10 @@
 #include "common.h"
 
 void initTokenizer(struct State* H, struct Tokenizer* tokenizer, const char* source) {
+  if (strncmp(source, "\xEF\xBB\xBF", 3) == 0) {
+    source += 3;
+  }
+
   tokenizer->H = H;
   tokenizer->start = source;
   tokenizer->end = source;
