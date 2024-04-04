@@ -46,6 +46,7 @@ struct Token {
   const char* start;
   s32 length;
   s32 line;
+  Value value;
 };
 
 struct Tokenizer {

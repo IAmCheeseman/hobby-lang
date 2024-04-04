@@ -429,10 +429,7 @@ static void number(struct Parser* parser, UNUSED bool canAssign) {
 }
 
 static void string(struct Parser* parser, UNUSED bool canAssign) {
-  emitConstant(
-      parser, 
-      NEW_OBJ(copyString(
-          parser->H, parser->previous.start + 1, parser->previous.length - 2)));
+  emitConstant(parser, parser->previous.value);
 }
 
 static void namedVariable(struct Parser* parser, struct Token name, bool canAssign) {
@@ -1371,6 +1368,9 @@ void markCompilerRoots(struct State* H, struct Parser* parser) {
   if (parser == NULL) {
     return;
   }
+
+  markValue(H, parser->current.value);
+  markValue(H, parser->previous.value);
 
   struct Compiler* compiler = parser->compiler;
   while (compiler != NULL) {

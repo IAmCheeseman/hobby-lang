@@ -1,10 +1,14 @@
 #include "tokenizer.h"
 
+#include <stdio.h>
 #include <string.h>
 
 #include "common.h"
+#include "memory.h"
+#include "object.h"
 
 void initTokenizer(struct State* H, struct Tokenizer* tokenizer, const char* source) {
+  // Skip UTF8 BOM
   if (strncmp(source, "\xEF\xBB\xBF", 3) == 0) {
     source += 3;
   }
@@ -62,6 +66,7 @@ static struct Token makeToken(struct Tokenizer* tokenizer, enum TokenType type) 
   token.start = tokenizer->start;
   token.length = (s32)(tokenizer->end - tokenizer->start);
   token.line = tokenizer->line;
+  token.value = NEW_NIL;
   return token;
 }
 
@@ -71,6 +76,7 @@ static struct Token errorToken(struct Tokenizer* tokenizer, const char* message)
   token.start = message;
   token.length = (s32)strlen(message);
   token.line = tokenizer->line;
+  token.value = NEW_NIL;
   return token;
 }
 
@@ -199,19 +205,55 @@ static struct Token number(struct Tokenizer* tokenizer) {
 }
 
 static struct Token string(struct Tokenizer* tokenizer, char terminator) {
+  s32 capacity = 8;
+  s32 count = 0;
+  char* chars = ALLOCATE(tokenizer->H, char, capacity);
+
   while (peek(tokenizer) != terminator && !isAtEnd(tokenizer)) {
-    if (peek(tokenizer) == '\n') {
-      tokenizer->line++;
+    char c = peek(tokenizer);
+
+    if (c == '\n') {
+      FREE_ARRAY(tokenizer->H, char, chars, capacity);
+      return errorToken(tokenizer, "Unclosed string.");
     }
+
+    if (c == '\\') { // escape code
+      advance(tokenizer);
+      c = peek(tokenizer);
+
+      switch (c) {
+        case 'n': c = '\n'; break;
+        case 't': c = '\t'; break;
+        case 'r': c = '\r'; break;
+        case 'a': c = '\a'; break;
+        case '"':
+        case '\'':
+        case '\\':
+          break; // Put self
+        default:
+          FREE_ARRAY(tokenizer->H, char, chars, capacity);
+          return errorToken(tokenizer, "Invalid escape code.");
+      }
+    }
+
+    if (capacity < count + 1) {
+      s32 oldCapacity = capacity;
+      capacity = GROW_CAPACITY(capacity);
+      chars = GROW_ARRAY(tokenizer->H, char, chars, oldCapacity, capacity);
+    }
+  
+    chars[count++] = c;
+
     advance(tokenizer);
   }
 
-  if (isAtEnd(tokenizer)) {
-    return errorToken(tokenizer, "Unterminated string.");
-  }
+  advance(tokenizer); // Eat "
 
-  advance(tokenizer);
-  return makeToken(tokenizer, TOKEN_STRING);
+  struct Token token = makeToken(tokenizer, TOKEN_STRING);
+  token.value = NEW_OBJ(copyString(tokenizer->H, chars, count));
+  FREE_ARRAY(tokenizer->H, char, chars, capacity);
+
+  return token;
 }
 
 struct Token nextToken(struct Tokenizer* tokenizer) {
