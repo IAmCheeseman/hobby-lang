@@ -170,7 +170,7 @@ struct Obj {
 struct Function {
   struct Obj obj;
   u16 arity;
-  u8 upvalueCount;
+  s32 upvalueCount;
 
   s32 bcCount;
   s32 bcCapacity;

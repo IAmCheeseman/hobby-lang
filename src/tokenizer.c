@@ -209,10 +209,10 @@ static struct Token string(struct Tokenizer* tokenizer, char terminator) {
   s32 count = 0;
   char* chars = ALLOCATE(tokenizer->H, char, capacity);
 
-  while (peek(tokenizer) != terminator && !isAtEnd(tokenizer)) {
+  while (peek(tokenizer) != terminator) {
     char c = peek(tokenizer);
 
-    if (c == '\n') {
+    if (isAtEnd(tokenizer) || c == '\n') {
       FREE_ARRAY(tokenizer->H, char, chars, capacity);
       return errorToken(tokenizer, "Unclosed string.");
     }
