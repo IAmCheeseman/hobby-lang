@@ -10,7 +10,7 @@ var start = clock();
 
 var i = 0;
 while ((i += 1) <= 5) {
-  print(fib(28));
+  print(fib(35));
 }
 
 print(clock() - start);

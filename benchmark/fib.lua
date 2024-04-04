@@ -7,6 +7,6 @@ end
 
 local start = os.clock()
 for _=1, 5 do
-  print(fib(28))
+  print(fib(35))
 end
 print("Time:", os.clock() - start)

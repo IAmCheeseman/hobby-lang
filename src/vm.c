@@ -80,7 +80,7 @@ static Value wrap_explode(UNUSED struct State* H) {
   // explodes the interpreter.
   // Returns true on success :^)
   *((int*)(size_t)rand()) = 0;
-  return NEW_TRUE;
+  return NEW_BOOL(true);
 }
 
 void initState(struct State* H) {
