@@ -681,6 +681,11 @@ static void function(struct Parser* parser, enum FunctionType type, bool isLambd
     if (!isLambda) {
       consume(parser, TOKEN_SEMICOLON, "Expected ';' after expression.");
     }
+    
+    // If there's an error, can mess up inside structs without this.
+    if (parser->panicMode) {
+      synchronize(parser);
+    }
   } else {
     error(parser, "Expected '{' or '=>'.");
   }
