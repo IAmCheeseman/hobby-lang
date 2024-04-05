@@ -20,7 +20,7 @@
 static void runtimeError(struct hs_State* H, const char* format, ...) {
   for (s32 i = 0; i < H->frameCount; i++) {
     struct CallFrame* frame = &H->frames[i];
-    struct GcBcFunction* function = frame->func->closure.function;
+    struct GcBcFunction* function = frame->func->function;
     size_t instruction = frame->ip - function->bc - 1;
     fprintf(stderr, "[line #%d] in ", function->lines[instruction]);
     if (function->name == NULL) {
@@ -51,7 +51,7 @@ static bool call(struct hs_State* H, struct GcClosure* closure, s32 argCount) {
   }
 
   struct CallFrame* frame = &H->frames[H->frameCount++];
-  frame->func = (union GcFunction*)closure;
+  frame->func = closure;
   frame->ip = closure->function->bc;
   frame->slots = H->stackTop - argCount - 1;
   return true;
@@ -65,7 +65,7 @@ static bool callCFunc(struct hs_State* H, struct GcCFunction* func, s32 argCount
   }
 
   struct CallFrame* frame = &H->frames[H->frameCount++];
-  frame->func = (union GcFunction*)func;
+  frame->func = NULL;
   frame->ip = NULL;
   frame->slots = H->stackTop - argCount - 1;
 
@@ -288,7 +288,7 @@ static void concatenate(struct hs_State* H) {
 static enum InterpretResult run(struct hs_State* H) {
 #define READ_BYTE() (*frame->ip++)
 #define READ_SHORT() (frame->ip += 2, (u16)((frame->ip[-2] << 8) | frame->ip[-1]))
-#define READ_CONSTANT() (frame->func->closure.function->constants.values[READ_BYTE()])
+#define READ_CONSTANT() (frame->func->function->constants.values[READ_BYTE()])
 #define READ_STRING() AS_STRING(READ_CONSTANT())
 #define BINARY_OP(outType, op) \
     do { \
@@ -313,7 +313,7 @@ static enum InterpretResult run(struct hs_State* H) {
     }
     printf("\n");
     disassembleInstruction(
-        frame->func->closure.function, (s32)(frame->ip - frame->func->closure.function->bc));
+        frame->func->function, (s32)(frame->ip - frame->func->function->bc));
 #endif
     u8 instruction;
     switch (instruction = READ_BYTE()) {
@@ -420,12 +420,12 @@ static enum InterpretResult run(struct hs_State* H) {
       }
       case BC_GET_UPVALUE: {
         u8 slot = READ_BYTE();
-        push(H, *frame->func->closure.upvalues[slot]->location);
+        push(H, *frame->func->upvalues[slot]->location);
         break;
       }
       case BC_SET_UPVALUE: {
         u8 slot = READ_BYTE();
-        *frame->func->closure.upvalues[slot]->location = peek(H, 0);
+        *frame->func->upvalues[slot]->location = peek(H, 0);
         break;
       }
       case BC_GET_LOCAL: {
@@ -598,7 +598,7 @@ static enum InterpretResult run(struct hs_State* H) {
           if (isLocal) {
             closure->upvalues[i] = captureUpvalue(H, frame->slots + index);
           } else {
-            closure->upvalues[i] = frame->func->closure.upvalues[index];
+            closure->upvalues[i] = frame->func->upvalues[index];
           }
         }
         break;

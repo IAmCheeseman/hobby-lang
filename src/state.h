@@ -8,7 +8,7 @@
 #define STACK_MAX (FRAMES_MAX * U8_COUNT)
 
 struct CallFrame {
-  union GcFunction* func;
+  struct GcClosure* func;
   u8* ip;
   Value* slots;
 };
@@ -36,8 +36,19 @@ struct hs_State {
 };
 
 void resetStack(struct hs_State* H);
-void push(struct hs_State* H, Value value);
-Value pop(struct hs_State* H);
-Value peek(struct hs_State* H, s32 distance);
+
+inline void push(struct hs_State* H, Value value) {
+  *H->stackTop = value;
+  H->stackTop++;
+}
+
+inline Value pop(struct hs_State* H) {
+  H->stackTop--;
+  return *H->stackTop;
+}
+
+inline Value peek(struct hs_State* H, s32 distance) {
+  return H->stackTop[-1 - distance];
+}
 
 #endif // _HOBBYSCRIPT_STATE_H

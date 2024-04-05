@@ -153,8 +153,8 @@ struct GcClosure {
 
 struct GcBcFunction {
   struct GcObj obj;
-  u16 arity;
-  s32 upvalueCount;
+  u8 arity;
+  u8 upvalueCount;
 
   s32 bcCount;
   s32 bcCapacity;
@@ -163,11 +163,6 @@ struct GcBcFunction {
 
   struct ValueArray constants;
   struct GcString* name;
-};
-
-union GcFunction {
-  struct GcClosure closure;
-  struct GcCFunction cFunc;
 };
 
 struct GcString {

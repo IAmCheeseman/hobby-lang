@@ -27,19 +27,6 @@ static Value* getValueAt(struct hs_State* H, s32 index) {
   return (value > H->stackTop) ? NULL : value;
 }
 
-void push(struct hs_State* H, Value value) {
-  *H->stackTop = value;
-  H->stackTop++;
-}
-
-Value pop(struct hs_State* H) {
-  H->stackTop--;
-  return *H->stackTop;
-}
-
-Value peek(struct hs_State* H, s32 distance) {
-  return H->stackTop[-1 - distance];
-}
 
 struct hs_State* hs_newState() {
   struct hs_State* H = malloc(sizeof(struct hs_State));
