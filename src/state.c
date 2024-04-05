@@ -3,30 +3,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "hobbylang.h"
 #include "memory.h"
 #include "compiler.h"
 #include "object.h"
 #include "table.h"
 #include "tostring.h"
-
-static void wrap_print(struct hs_State* H, s32 argCount) {
-  for (s32 i = 0; i < argCount; i++) {
-    size_t length;
-    const char* str = hs_toString(H, i, &length);
-    fwrite(str, sizeof(char), length, stdout);
-    if (i != argCount - 1) {
-      putc('\t', stdout);
-    }
-  }
-  putc('\n', stdout);
-  hs_pushNil(H);
-}
-
-static void wrap_toString(struct hs_State* H, UNUSED s32 argCount) {
-  size_t length;
-  const char* str = hs_toString(H, 0, &length);
-  hs_pushString(H, str, length);
-}
+#include "modules.h"
 
 void resetStack(struct hs_State* H) {
   H->stackTop = H->stack;
@@ -72,11 +55,7 @@ struct hs_State* hs_newState() {
   initTable(&H->strings);
   initTable(&H->globals);
 
-  hs_pushCFunction(H, wrap_print, -1);
-  hs_setGlobal(H, "print");
-
-  hs_pushCFunction(H, wrap_toString, 1);
-  hs_setGlobal(H, "toString");
+  openCore(H);
 
   return H;
 }
@@ -99,6 +78,13 @@ void hs_setGlobal(struct hs_State* H, const char* name) {
   tableSet(H, &H->globals, AS_STRING(peek(H, 0)), peek(H, 1));
   pop(H); // name
   pop(H); // value
+}
+
+void hs_registerGlobalFunctions(struct hs_State* H, struct hs_FuncInfo* funcs) {
+  for (struct hs_FuncInfo* info = funcs; info->func != NULL; info++) {
+    hs_pushCFunction(H, info->func, info->argCount);
+    hs_setGlobal(H, info->name);
+  }
 }
 
 void hs_pushNil(struct hs_State* H) {

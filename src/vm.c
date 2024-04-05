@@ -39,23 +39,6 @@ static void runtimeError(struct hs_State* H, const char* format, ...) {
   resetStack(H);
 }
 
-UNUSED static Value wrap_print(struct hs_State* H) {
-  printValue(peek(H, 0));
-  printf("\n");
-  return NEW_NIL;
-}
-
-UNUSED static Value wrap_clock(UNUSED struct hs_State* H) {
-  return NEW_NUMBER((f64)clock() / CLOCKS_PER_SEC);
-}
-
-UNUSED static Value wrap_explode(UNUSED struct hs_State* H) {
-  // explodes the interpreter.
-  // Returns true on success :^)
-  *((int*)(size_t)rand()) = 0;
-  return NEW_BOOL(true);
-}
-
 static bool call(struct hs_State* H, struct GcClosure* closure, s32 argCount) {
   if (argCount != closure->function->arity) {
     runtimeError(H, "Expected %d arguments, but got %d.", closure->function->arity, argCount);

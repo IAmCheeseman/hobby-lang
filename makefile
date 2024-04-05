@@ -30,7 +30,7 @@ BUILD = bin
 
 SRC = src/main.c src/memory.c src/debug.c src/value.c src/vm.c \
 			src/compiler.c src/tokenizer.c src/object.c src/table.c \
-			src/state.c src/tostring.c
+			src/state.c src/tostring.c src/core.c
 
 OBJ = $(SRC:%.c=$(BUILD)/%_$(PROFILE).o)
 

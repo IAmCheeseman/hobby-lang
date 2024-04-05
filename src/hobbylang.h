@@ -12,12 +12,19 @@ struct hs_State;
 
 typedef void (*hs_CFunction)(struct hs_State* H, int argCount);
 
+struct hs_FuncInfo {
+  hs_CFunction func;
+  const char* name;
+  int argCount;
+};
+
 struct hs_State* hs_newState();
 void hs_freeState(struct hs_State* state);
 
 void hs_pop(struct hs_State* H);
 
 void hs_setGlobal(struct hs_State* H, const char* name);
+void hs_registerGlobalFunctions(struct hs_State* H, struct hs_FuncInfo* funcs);
 
 void hs_pushNil(struct hs_State* H);
 void hs_pushNumber(struct hs_State* H, double v);

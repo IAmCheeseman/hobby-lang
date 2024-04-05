@@ -27,21 +27,16 @@ struct Attack {
   };
 
   func displayStats() {
-    print("Type: ");
-    print(getAttackTypeString(self.type));
-    print("Damage: ");
-    print(self.damage);
-    print("Piercing: ");
-    print(self.piercing * 100);
+    print("Type:\t\t" .. getAttackTypeString(self.type));
+    print("Damage:\t\t" .. toString(self.damage));
+    print("Piercing:\t" .. toString(self.piercing * 100) .. "%");
   }
 }
 
 var goblinAttack = Attack:new(AttackType:Melee, 12, 0.3);
 var wizardAttack = Attack:new(AttackType:Magic, 16, 0.0);
 
-print("Goblin:");
+print("-- Goblin --");
 goblinAttack.displayStats();
-
-print("");
-print("Wizard:");
+print("\n-- Wizard --");
 wizardAttack.displayStats();
