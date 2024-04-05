@@ -1,4 +1,4 @@
 bin/
 
 compile_flags.txt
-test.hl
+test.hs

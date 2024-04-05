@@ -1,2 +1,3 @@
-var str = toString(123);
-print(str .. "456");
+print("WHAT NAME");
+var name = input();
+print("HELLO, " .. name .. "!!!");
