@@ -4,4 +4,4 @@ struct Foo {
   }
 }
 
-print(Foo {}.this()); // expect: <struct Foo>
+print(Foo {}.this()); // expect: <Foo>

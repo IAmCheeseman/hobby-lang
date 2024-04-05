@@ -4,7 +4,7 @@
 #include "common.h"
 #include "object.h"
 
-void disassembleFunction(struct Function* function, void* functionPointer, const char* name);
-s32 disassembleInstruction(struct Function* function, s32 offset);
+void disassembleFunction(struct GcBcFunction* function, void* functionPointer, const char* name);
+s32 disassembleInstruction(struct GcBcFunction* function, s32 offset);
 
 #endif // _HOBBYL_DEBUG_H

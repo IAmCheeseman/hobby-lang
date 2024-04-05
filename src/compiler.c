@@ -39,7 +39,7 @@ struct ParseRule {
   enum Precedence precedence;
 };
 
-static struct Function* currentFunction(struct Parser* parser) {
+static struct GcBcFunction* currentFunction(struct Parser* parser) {
   return parser->compiler->function;
 }
 
@@ -171,7 +171,7 @@ static void initCompiler(struct Parser* parser,
   compiler->localOffset = 0;
   compiler->localCount = 0;
   compiler->scopeDepth = 0;
-  compiler->function = newFunction(parser->H);
+  compiler->function = newBcFunction(parser->H);
   compiler->loop = NULL;
   parser->compiler = compiler;
 
@@ -198,9 +198,9 @@ static void initCompiler(struct Parser* parser,
   }
 }
 
-static struct Function* endCompiler(struct Parser* parser) {
+static struct GcBcFunction* endCompiler(struct Parser* parser) {
   emitReturn(parser);
-  struct Function* function = parser->compiler->function;
+  struct GcBcFunction* function = parser->compiler->function;
 
 #ifdef DEBUG_PRINT_CODE
   if (!parser->hadError) {
@@ -687,7 +687,7 @@ static void function(struct Parser* parser, enum FunctionType type, bool isLambd
     error(parser, "Expected '{' or '=>'.");
   }
 
-  struct Function* function = endCompiler(parser);
+  struct GcBcFunction* function = endCompiler(parser);
   emitBytes(parser, BC_CLOSURE, makeConstant(parser, NEW_OBJ(function)));
 
   for (s32 i = 0; i < function->upvalueCount; i++) {
@@ -1339,7 +1339,7 @@ static void statement(struct Parser* parser) {
   }
 }
 
-struct Function* compile(struct State* H, struct Parser* parser, const char* source) {
+struct GcBcFunction* compile(struct hl_State* H, struct Parser* parser, const char* source) {
   parser->H = H;
   parser->compiler = NULL;
   parser->structCompiler = NULL;
@@ -1360,11 +1360,11 @@ struct Function* compile(struct State* H, struct Parser* parser, const char* sou
     declaration(parser);
   }
 
-  struct Function* function = endCompiler(parser);
+  struct GcBcFunction* function = endCompiler(parser);
   return parser->hadError ? NULL : function;
 }
 
-void markCompilerRoots(struct State* H, struct Parser* parser) {
+void markCompilerRoots(struct hl_State* H, struct Parser* parser) {
   if (parser == NULL) {
     return;
   }
@@ -1374,7 +1374,7 @@ void markCompilerRoots(struct State* H, struct Parser* parser) {
 
   struct Compiler* compiler = parser->compiler;
   while (compiler != NULL) {
-    markObject(H, (struct Obj*)compiler->function);
+    markObject(H, (struct GcObj*)compiler->function);
     compiler = compiler->enclosing;
   }
 }

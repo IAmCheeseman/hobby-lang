@@ -5,7 +5,7 @@
 #include "opcodes.h"
 #include "object.h"
 
-void disassembleFunction(struct Function* function, void* functionPointer, const char* name) {
+void disassembleFunction(struct GcBcFunction* function, void* functionPointer, const char* name) {
   printf("== %s (%p) ==\n", name, functionPointer);
 
   for (int offset = 0; offset < function->bcCount;) {
@@ -18,20 +18,20 @@ static s32 simpleInstruction(const char* name, s32 offset) {
   return offset + 1;
 }
 
-static s32 byteInstruction(const char* name, struct Function* function, s32 offset) {
+static s32 byteInstruction(const char* name, struct GcBcFunction* function, s32 offset) {
   u8 slot = function->bc[offset + 1];
   printf("%-16s %4d\n", name, slot);
   return offset + 2; 
 }
 
-static int jumpInstruction(const char* name, s32 sign, struct Function* function, s32 offset) {
+static int jumpInstruction(const char* name, s32 sign, struct GcBcFunction* function, s32 offset) {
   u16 jump = (u16)(function->bc[offset + 1] << 8);
   jump |= function->bc[offset + 2];
   printf("%-16s %4d -> %4d\n", name, offset, offset + 3 + sign * jump);
   return offset + 3;
 }
 
-static s32 constantInstruction(const char* name, struct Function* function, s32 offset) {
+static s32 constantInstruction(const char* name, struct GcBcFunction* function, s32 offset) {
   u8 constant = function->bc[offset + 1];
   printf("%-16s %4d '", name, constant);
   printValue(function->constants.values[constant]);
@@ -39,7 +39,7 @@ static s32 constantInstruction(const char* name, struct Function* function, s32 
   return offset + 2;
 }
 
-static s32 invokeInstruction(const char* name, struct Function* function, s32 offset) {
+static s32 invokeInstruction(const char* name, struct GcBcFunction* function, s32 offset) {
   u8 constant = function->bc[offset + 1];
   u8 argCount = function->bc[offset + 2];
   printf("%-16s (%d args) %4d '", name, argCount, constant);
@@ -48,7 +48,7 @@ static s32 invokeInstruction(const char* name, struct Function* function, s32 of
   return offset + 3;
 }
 
-s32 disassembleInstruction(struct Function* function, s32 offset) {
+s32 disassembleInstruction(struct GcBcFunction* function, s32 offset) {
   printf("%04d ", offset);
   if (offset > 0 && function->lines[offset] == function->lines[offset - 1]) {
     printf("   | ");
@@ -148,7 +148,7 @@ s32 disassembleInstruction(struct Function* function, s32 offset) {
       printf("%-16s %4d ", "OP_CLOSURE", constant);
       printValue(function->constants.values[constant]);
       printf("\n");
-      struct Function* inner = AS_FUNCTION(function->constants.values[constant]);
+      struct GcBcFunction* inner = AS_FUNCTION(function->constants.values[constant]);
 
       for (int j = 0; j < inner->upvalueCount; j++) {
         int isLocal = function->bc[offset++];

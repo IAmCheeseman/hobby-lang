@@ -9,11 +9,7 @@ enum InterpretResult {
   RUNTIME_ERR,
 };
 
-void initState(struct State* H);
-void freeState(struct State* H);
-void bindCFunction(struct State* H, const char* name, CFunction cFunction);
-enum InterpretResult interpret(struct State* H, const char* source);
-void push(struct State* H, Value value);
-Value pop(struct State* H);
+void bindCFunction(struct hl_State* H, const char* name, hl_CFunction cFunction);
+enum InterpretResult interpret(struct hl_State* H, const char* source);
 
 #endif // _HOBBYL_VM_H

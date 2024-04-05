@@ -11,10 +11,11 @@
 #include "object.h"
 #include "compiler.h"
 #include "table.h"
+#include "state.h"
 
 #define GC_HEAP_GROW_FACTOR 2
 
-void* reallocate(struct State* H, void* pointer, size_t oldSize, size_t newSize) {
+void* reallocate(struct hl_State* H, void* pointer, size_t oldSize, size_t newSize) {
   H->bytesAllocated += newSize - oldSize;
   if (newSize > oldSize) {
 #ifdef DEBUG_STRESS_GC
@@ -38,75 +39,75 @@ void* reallocate(struct State* H, void* pointer, size_t oldSize, size_t newSize)
   return newAllocation;
 }
 
-static void freeObject(struct State* H, struct Obj* object) {
+static void freeObject(struct hl_State* H, struct GcObj* object) {
 #ifdef DEBUG_LOG_GC
   printf("%p free type %d\n", (void*)object, object->type);
 #endif
 
   switch (object->type) {
     case OBJ_ARRAY: {
-      struct Array* array = (struct Array*)object;
+      struct GcArray* array = (struct GcArray*)object;
       freeValueArray(H, &array->values);
-      FREE(H, struct Array, array);
+      FREE(H, struct GcArray, array);
       break;
     }
     case OBJ_ENUM: {
-      struct Enum* enoom = (struct Enum*)object;
+      struct GcEnum* enoom = (struct GcEnum*)object;
       freeTable(H, &enoom->values);
-      FREE(H, struct Enum, object);
+      FREE(H, struct GcEnum, object);
       break;
     }
     case OBJ_STRUCT: {
-      struct Struct* strooct = (struct Struct*)object;
+      struct GcStruct* strooct = (struct GcStruct*)object;
       freeTable(H, &strooct->defaultFields);
       freeTable(H, &strooct->methods);
       freeTable(H, &strooct->staticMethods);
-      FREE(H, struct Struct, object);
+      FREE(H, struct GcStruct, object);
       break;
     }
     case OBJ_INSTANCE: {
-      struct Instance* instance = (struct Instance*)object;
+      struct GcInstance* instance = (struct GcInstance*)object;
       freeTable(H, &instance->fields);
-      FREE(H, struct Instance, object);
+      FREE(H, struct GcInstance, object);
       break;
     }
     case OBJ_CLOSURE: {
-      struct Closure* closure = (struct Closure*)object;
+      struct GcClosure* closure = (struct GcClosure*)object;
       FREE_ARRAY(
-          H, struct Upvalue*, closure->upvalues, closure->upvalueCount);
-      FREE(H, struct Closure, object);
+          H, struct GcUpvalue*, closure->upvalues, closure->upvalueCount);
+      FREE(H, struct GcClosure, object);
       break;
     }
     case OBJ_UPVALUE: {
-      FREE(H, struct Upvalue, object);
+      FREE(H, struct GcUpvalue, object);
       break;
     }
     case OBJ_FUNCTION: {
-      struct Function* function = (struct Function*)object;
+      struct GcBcFunction* function = (struct GcBcFunction*)object;
       FREE_ARRAY(H, u8, function->bc, function->bcCapacity);
       FREE_ARRAY(H, s32, function->lines, function->bcCapacity);
       freeValueArray(H, &function->constants);
-      FREE(H, struct Function, object);
+      FREE(H, struct GcBcFunction, object);
       break;
     }
     case OBJ_BOUND_METHOD: {
-      FREE(H, struct BoundMethod, object);
+      FREE(H, struct GcBoundMethod, object);
       break;
     }
     case OBJ_CFUNCTION: {
-      FREE(H, struct CFunctionBinding, object);
+      FREE(H, struct GcCFunction, object);
       break;
     }
     case OBJ_STRING: {
-      struct String* string = (struct String*)object;
+      struct GcString* string = (struct GcString*)object;
       FREE_ARRAY(H, char, string->chars, string->length + 1);
-      FREE(H, struct String, object);
+      FREE(H, struct GcString, object);
       break;
     }
   }
 }
 
-void markObject(struct State* H, struct Obj* object) {
+void markObject(struct hl_State* H, struct GcObj* object) {
   if (object == NULL) {
     return;
   }
@@ -125,8 +126,8 @@ void markObject(struct State* H, struct Obj* object) {
 
   if (H->grayCapacity < H->grayCount + 1) {
     H->grayCapacity = GROW_CAPACITY(H->grayCapacity);
-    H->grayStack = (struct Obj**)realloc(
-        H->grayStack, sizeof(struct Obj*) * H->grayCapacity);
+    H->grayStack = (struct GcObj**)realloc(
+        H->grayStack, sizeof(struct GcObj*) * H->grayCapacity);
     if (H->grayStack == NULL) {
       exit(1);
     }
@@ -135,19 +136,19 @@ void markObject(struct State* H, struct Obj* object) {
   H->grayStack[H->grayCount++] = object;
 }
 
-void markValue(struct State* H, Value value) {
+void markValue(struct hl_State* H, Value value) {
   if (IS_OBJ(value)) {
     markObject(H, AS_OBJ(value));
   }
 }
 
-static void markArray(struct State* H, struct ValueArray* array) {
+static void markArray(struct hl_State* H, struct ValueArray* array) {
   for (s32 i = 0; i < array->count; i++) {
     markValue(H, array->values[i]);
   }
 }
 
-static void blackenObject(struct State* H, struct Obj* object) {
+static void blackenObject(struct hl_State* H, struct GcObj* object) {
 #ifdef DEBUG_LOG_GC
   printf("%p blacken ", (void*)object);
   printValue(NEW_OBJ(object));
@@ -160,85 +161,85 @@ static void blackenObject(struct State* H, struct Obj* object) {
     case OBJ_STRING:
       break;
     case OBJ_UPVALUE:
-      markValue(H, ((struct Upvalue*)object)->closed);
+      markValue(H, ((struct GcUpvalue*)object)->closed);
       break;
     case OBJ_FUNCTION: {
-      struct Function* function = (struct Function*)object;
-      markObject(H, (struct Obj*)function->name);
+      struct GcBcFunction* function = (struct GcBcFunction*)object;
+      markObject(H, (struct GcObj*)function->name);
       markArray(H, &function->constants);
       break;
     }
     case OBJ_BOUND_METHOD: {
-      struct BoundMethod* bound = (struct BoundMethod*)object;
+      struct GcBoundMethod* bound = (struct GcBoundMethod*)object;
       markValue(H, bound->receiver);
-      markObject(H, (struct Obj*)bound->method);
+      markObject(H, (struct GcObj*)bound->method);
       break;
     }
     case OBJ_CLOSURE: {
-      struct Closure* closure = (struct Closure*)object;
-      markObject(H, (struct Obj*)closure->function);
+      struct GcClosure* closure = (struct GcClosure*)object;
+      markObject(H, (struct GcObj*)closure->function);
       for (s32 i = 0; i < closure->upvalueCount; i++) {
-        markObject(H, (struct Obj*)closure->upvalues[i]);
+        markObject(H, (struct GcObj*)closure->upvalues[i]);
       }
       break;
     }
     case OBJ_STRUCT: {
-      struct Struct* strooct = (struct Struct*)object;
-      markObject(H, (struct Obj*)strooct->name);
+      struct GcStruct* strooct = (struct GcStruct*)object;
+      markObject(H, (struct GcObj*)strooct->name);
       markTable(H, &strooct->defaultFields);
       markTable(H, &strooct->methods);
       markTable(H, &strooct->staticMethods);
       break;
     }
     case OBJ_INSTANCE: {
-      struct Instance* instance = (struct Instance*)object;
-      markObject(H, (struct Obj*)instance->strooct);
+      struct GcInstance* instance = (struct GcInstance*)object;
+      markObject(H, (struct GcObj*)instance->strooct);
       markTable(H, &instance->fields);
       break;
     }
     case OBJ_ENUM: {
-      struct Enum* enoom = (struct Enum*)object;
-      markObject(H, (struct Obj*)enoom->name);
+      struct GcEnum* enoom = (struct GcEnum*)object;
+      markObject(H, (struct GcObj*)enoom->name);
       markTable(H, &enoom->values);
       break;
     }
     case OBJ_ARRAY: {
-      struct Array* array = (struct Array*)object;
+      struct GcArray* array = (struct GcArray*)object;
       markArray(H, &array->values);
       break;
     }
   }
 }
 
-static void markRoots(struct State* H) {
+static void markRoots(struct hl_State* H) {
   for (Value* slot = H->stack; slot < H->stackTop; slot++) {
     markValue(H, *slot);
   }
 
   for (s32 i = 0; i < H->frameCount; i++) {
-    markObject(H, (struct Obj*)H->frames[i].closure);
+    markObject(H, (struct GcObj*)H->frames[i].func);
   }
 
-  for (struct Upvalue* upvalue = H->openUpvalues;
+  for (struct GcUpvalue* upvalue = H->openUpvalues;
       upvalue != NULL;
       upvalue = upvalue->next) {
-    markObject(H, (struct Obj*)upvalue);
+    markObject(H, (struct GcObj*)upvalue);
   }
 
   markTable(H, &H->globals);
   markCompilerRoots(H, H->parser);
 }
 
-static void traceReferences(struct State* H) {
+static void traceReferences(struct hl_State* H) {
   while (H->grayCount > 0) {
-    struct Obj* object = H->grayStack[--H->grayCount];
+    struct GcObj* object = H->grayStack[--H->grayCount];
     blackenObject(H, object);
   }
 }
 
-static void sweep(struct State* H) {
-  struct Obj* previous = NULL;
-  struct Obj* current = H->objects;
+static void sweep(struct hl_State* H) {
+  struct GcObj* previous = NULL;
+  struct GcObj* current = H->objects;
 
   while (current != NULL) {
     if (current->isMarked) {
@@ -246,7 +247,7 @@ static void sweep(struct State* H) {
       previous = current;
       current = current->next;
     } else {
-      struct Obj* unreached = current;
+      struct GcObj* unreached = current;
       current = current->next;
       if (previous != NULL) {
         previous->next = current;
@@ -259,7 +260,7 @@ static void sweep(struct State* H) {
   }
 }
 
-void collectGarbage(struct State* H) {
+void collectGarbage(struct hl_State* H) {
 #ifdef DEBUG_LOG_GC
   printf("-- gc begin\n");
   size_t before = H->bytesAllocated;
@@ -279,10 +280,10 @@ void collectGarbage(struct State* H) {
 #endif
 }
 
-void freeObjects(struct State* H) {
-  struct Obj* object = H->objects;
+void freeObjects(struct hl_State* H) {
+  struct GcObj* object = H->objects;
   while (object != NULL) {
-    struct Obj* next = object->next;
+    struct GcObj* next = object->next;
     freeObject(H, object);
     object = next;
   }

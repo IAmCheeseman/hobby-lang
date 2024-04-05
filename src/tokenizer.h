@@ -50,7 +50,7 @@ struct Token {
 };
 
 struct Tokenizer {
-  struct State* H;
+  struct hl_State* H;
   const char* start;
   const char* end;
   struct Token prev;
@@ -58,7 +58,7 @@ struct Tokenizer {
   s32 line;
 };
 
-void initTokenizer(struct State* H, struct Tokenizer* tokenizer, const char* source);
+void initTokenizer(struct hl_State* H, struct Tokenizer* tokenizer, const char* source);
 struct Token nextToken(struct Tokenizer* tokenizer);
 
 #endif // _HOBBYL_TOKENIZER_H

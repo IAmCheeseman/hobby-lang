@@ -4,8 +4,9 @@
 
 #include "common.h"
 #include "vm.h"
+#include "hobbylang.h"
 
-static void repl(struct State* H) {
+static void repl(struct hl_State* H) {
   char line[1024];
 
   while (true) {
@@ -48,7 +49,7 @@ static char* readFile(const char* path) {
   return buffer;
 }
 
-static void runFile(struct State* H, const char* path) {
+static void runFile(struct hl_State* H, const char* path) {
   char* source = readFile(path);
   enum InterpretResult result = interpret(H, source);
   free(source);
@@ -65,19 +66,18 @@ static void runFile(struct State* H, const char* path) {
 }
 
 s32 main(s32 argc, const char* args[]) {
-  struct State H;
-  initState(&H);
+  struct hl_State* H = hl_newState();
 
   if (argc == 1) {
-    repl(&H);
+    repl(H);
   } else if (argc == 2) {
-    runFile(&H, args[1]);
+    runFile(H, args[1]);
   } else {
     fprintf(stderr, "Usage: %s [path]\n", args[0]);
     exit(1);
   }
 
-  freeState(&H);
+  hl_freeState(H);
   return 0;
 }
 

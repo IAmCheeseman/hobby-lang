@@ -35,7 +35,7 @@ enum FunctionType {
 struct Compiler {
   struct Compiler* enclosing;
 
-  struct Function* function;
+  struct GcBcFunction* function;
   enum FunctionType type;
 
   s32 localOffset;
@@ -55,7 +55,7 @@ struct StructCompiler {
 };
 
 struct Parser {
-  struct State* H;
+  struct hl_State* H;
   struct Token current;
   struct Token previous;
   struct Compiler* compiler;
@@ -65,7 +65,7 @@ struct Parser {
   bool panicMode;
 };
 
-struct Function* compile(struct State* H, struct Parser* parser, const char* source);
-void markCompilerRoots(struct State* H, struct Parser* parser);
+struct GcBcFunction* compile(struct hl_State* H, struct Parser* parser, const char* source);
+void markCompilerRoots(struct hl_State* H, struct Parser* parser);
 
 #endif // _HOBBYL_COMPILER_H

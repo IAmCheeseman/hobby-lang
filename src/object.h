@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "common.h"
+#include "hobbylang.h"
 
 #define OBJ_TYPE(value)        (AS_OBJ(value)->type)
 
@@ -16,17 +17,18 @@
 #define IS_INSTANCE(value)     isObjOfType(value, OBJ_INSTANCE)
 #define IS_ENUM(value)         isObjOfType(value, OBJ_ENUM)
 #define IS_ARRAY(value)        isObjOfType(value, OBJ_ARRAY)
+#define IS_UPVALUE(value)      isObjOfType(value, OBJ_UPVALUE)
 
-#define AS_CLOSURE(value)      ((struct Closure*)AS_OBJ(value))
-#define AS_FUNCTION(value)     ((struct Function*)AS_OBJ(value))
-#define AS_CFUNCTION(value)    (((struct CFunctionBinding*)AS_OBJ(value))->cFunc)
-#define AS_BOUND_METHOD(value) ((struct BoundMethod*)AS_OBJ(value))
-#define AS_STRING(value)       ((struct String*)AS_OBJ(value))
+#define AS_CLOSURE(value)      ((struct GcClosure*)AS_OBJ(value))
+#define AS_FUNCTION(value)     ((struct GcBcFunction*)AS_OBJ(value))
+#define AS_CFUNCTION(value)    ((struct GcCFunction*)AS_OBJ(value))
+#define AS_BOUND_METHOD(value) ((struct GcBoundMethod*)AS_OBJ(value))
+#define AS_STRING(value)       ((struct GcString*)AS_OBJ(value))
 #define AS_CSTRING(value)      (AS_STRING(value)->chars)
-#define AS_STRUCT(value)       ((struct Struct*)AS_OBJ(value))
-#define AS_INSTANCE(value)     ((struct Instance*)AS_OBJ(value))
-#define AS_ENUM(value)         ((struct Enum*)AS_OBJ(value))
-#define AS_ARRAY(value)        ((struct Array*)AS_OBJ(value))
+#define AS_STRUCT(value)       ((struct GcStruct*)AS_OBJ(value))
+#define AS_INSTANCE(value)     ((struct GcInstance*)AS_OBJ(value))
+#define AS_ENUM(value)         ((struct GcEnum*)AS_OBJ(value))
+#define AS_ARRAY(value)        ((struct GcArray*)AS_OBJ(value))
 
 enum ObjType {
   OBJ_CLOSURE,
@@ -58,7 +60,7 @@ typedef u64 Value;
 
 #define AS_BOOL(value)     ((value) == NEW_TRUE)
 #define AS_NUMBER(value)   valueToNumber(value)
-#define AS_OBJ(value) ((struct Obj*)(uintptr_t)((value) & ~(SIGN_BIT | QNAN)))
+#define AS_OBJ(value) ((struct GcObj*)(uintptr_t)((value) & ~(SIGN_BIT | QNAN)))
 
 #define NEW_FALSE          ((Value)(u64)(QNAN | TAG_FALSE))
 #define NEW_TRUE           ((Value)(u64)(QNAN | TAG_TRUE))
@@ -80,13 +82,6 @@ static inline Value numberToValue(f64 number) {
 }
 
 #else
-
-enum ValueType {
-  VALTYPE_BOOL,
-  VALTYPE_NIL,
-  VALTYPE_NUMBER,
-  VALTYPE_OBJ,
-};
 
 typedef struct {
   enum ValueType type;
@@ -119,56 +114,45 @@ struct ValueArray {
   Value* values;
 };
 
-#define FRAMES_MAX 64
-#define STACK_MAX (FRAMES_MAX * U8_COUNT)
-
-struct Entry {
-  struct String* key;
+struct TableEntry {
+  struct GcString* key;
   Value value;
 };
 
 struct Table {
   s32 count;
   s32 capacity;
-  struct Entry* entries;
+  struct TableEntry* entries;
 };
 
-struct CallFrame {
-  struct Closure* closure;
-  u8* ip;
-  Value* slots;
-};
-
-struct State {
-  struct CallFrame frames[FRAMES_MAX];
-  s32 frameCount;
-
-  Value stack[STACK_MAX];
-  Value* stackTop;
-  struct Table globals;
-  struct Table strings;
-  struct Upvalue* openUpvalues;
-
-  size_t bytesAllocated;
-  size_t nextGc;
-
-  struct Obj* objects;
-
-  s32 grayCount;
-  s32 grayCapacity;
-  struct Obj** grayStack;
-
-  struct Parser* parser;
-};
-
-struct Obj {
+struct GcObj {
   enum ObjType type;
   bool isMarked;
-  struct Obj* next;
+  struct GcObj* next;
 };
 
-struct Function {
-  struct Obj obj;
+struct GcUpvalue {
+  struct GcObj obj;
+  Value* location;
+  Value closed;
+  struct GcUpvalue* next;
+};
+
+struct GcCFunction {
+  struct GcObj obj;
+  hl_CFunction cFunc;
+  s32 arity;
+};
+
+struct GcClosure {
+  struct GcObj obj;
+  struct GcBcFunction* function;
+  struct GcUpvalue** upvalues;
+  u8 upvalueCount;
+};
+
+struct GcBcFunction {
+  struct GcObj obj;
   u16 arity;
   s32 upvalueCount;
 
@@ -178,92 +162,76 @@ struct Function {
   s32* lines;
 
   struct ValueArray constants;
-  struct String* name;
+  struct GcString* name;
 };
 
-struct Closure {
-  struct Obj obj;
-  struct Function* function;
-  struct Upvalue** upvalues;
-  u8 upvalueCount;
+union GcFunction {
+  struct GcClosure closure;
+  struct GcCFunction cFunc;
 };
 
-struct Upvalue {
-  struct Obj obj;
-  Value* location;
-  Value closed;
-  struct Upvalue* next;
-};
-
-typedef Value (*CFunction)(struct State* H);
-
-struct CFunctionBinding {
-  struct Obj obj;
-  CFunction cFunc;
-};
-
-struct String {
-  struct Obj obj;
+struct GcString {
+  struct GcObj obj;
   s32 length;
   char* chars;
   u32 hash;
 };
 
-struct Struct {
-  struct Obj obj;
-  struct String* name;
+struct GcStruct {
+  struct GcObj obj;
+  struct GcString* name;
   struct Table defaultFields;
   struct Table methods;
   struct Table staticMethods;
 };
 
-struct Instance {
-  struct Obj obj;
-  struct Struct* strooct;
+struct GcInstance {
+  struct GcObj obj;
+  struct GcStruct* strooct;
   struct Table fields;
 };
 
-struct BoundMethod {
-  struct Obj obj;
+struct GcBoundMethod {
+  struct GcObj obj;
   Value receiver;
-  struct Closure* method;
+  struct GcClosure* method;
 };
 
-struct Enum {
-  struct Obj obj;
-  struct String* name;
+struct GcEnum {
+  struct GcObj obj;
+  struct GcString* name;
   struct Table values;
 };
 
-struct Array {
-  struct Obj obj;
+struct GcArray {
+  struct GcObj obj;
   struct ValueArray values;
 };
 
 void initValueArray(struct ValueArray* array);
-void copyValueArray(struct State* H, struct ValueArray* dest, struct ValueArray* src);
-void writeValueArray(struct State* H, struct ValueArray* array, Value value);
-void freeValueArray(struct State* H, struct ValueArray* array);
-void reserveValueArray(struct State* H, struct ValueArray* array, s32 size);
+void copyValueArray(struct hl_State* H, struct ValueArray* dest, struct ValueArray* src);
+void writeValueArray(struct hl_State* H, struct ValueArray* array, Value value);
+void freeValueArray(struct hl_State* H, struct ValueArray* array);
+void reserveValueArray(struct hl_State* H, struct ValueArray* array, s32 size);
 void printValue(Value value);
 bool valuesEqual(Value a, Value b);
 
-struct Array* newArray(struct State* H);
-struct Enum* newEnum(struct State* H, struct String* name);
-struct String* copyString(struct State* H, const char* chars, int length);
-struct String* takeString(struct State* H, char* chars, int length);
-struct Struct* newStruct(struct State* H, struct String* name);
-struct Instance* newInstance(struct State* H, struct Struct* strooct);
+struct GcArray* newArray(struct hl_State* H);
+struct GcEnum* newEnum(struct hl_State* H, struct GcString* name);
+struct GcString* copyString(struct hl_State* H, const char* chars, int length);
+struct GcString* takeString(struct hl_State* H, char* chars, int length);
+struct GcStruct* newStruct(struct hl_State* H, struct GcString* name);
+struct GcInstance* newInstance(struct hl_State* H, struct GcStruct* strooct);
 
-struct Closure* newClosure(struct State* H, struct Function* function);
-struct Upvalue* newUpvalue(struct State* H, Value* slot);
-struct Function* newFunction(struct State* H);
-struct CFunctionBinding* newCFunctionBinding(struct State* H, CFunction cFunc);
-struct BoundMethod* newBoundMethod(
-    struct State* H, Value receiver, struct Closure* method);
-void writeBytecode(struct State* H, struct Function* function, u8 byte, s32 line);
+struct GcClosure* newClosure(struct hl_State* H, struct GcBcFunction* function);
+struct GcUpvalue* newUpvalue(struct hl_State* H, Value* slot);
+struct GcBcFunction* newBcFunction(struct hl_State* H);
+struct GcCFunction* newCFunction(struct hl_State* H, hl_CFunction cFunc, int argCount);
+struct GcBoundMethod* newBoundMethod(
+    struct hl_State* H, Value receiver, struct GcClosure* method);
+void writeBytecode(struct hl_State* H, struct GcBcFunction* function, u8 byte, s32 line);
 s32 addFunctionConstant(
-    struct State* H, struct Function* function, Value value);
+    struct hl_State* H, struct GcBcFunction* function, Value value);
 
 void printObject(Value value);
 
