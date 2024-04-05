@@ -153,8 +153,8 @@ struct GcClosure {
 
 struct GcBcFunction {
   struct GcObj obj;
-  s32 arity;
-  s32 upvalueCount;
+  u8 arity;
+  u8 upvalueCount;
 
   s32 bcCount;
   s32 bcCapacity;

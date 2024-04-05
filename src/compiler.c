@@ -332,7 +332,7 @@ static s32 resolveLocal(
 }
 
 static s32 addUpvalue(struct Parser* parser, struct Compiler* compiler, u8 index, bool isLocal) {
-  s32 upvalueCount = compiler->function->upvalueCount;
+  u8 upvalueCount = compiler->function->upvalueCount;
 
   for (s32 i = 0; i < upvalueCount; i++) {
     struct CompilerUpvalue* upvalue = &compiler->upvalues[i];
@@ -341,7 +341,7 @@ static s32 addUpvalue(struct Parser* parser, struct Compiler* compiler, u8 index
     }
   }
 
-  if (upvalueCount == U8_COUNT) {
+  if (upvalueCount == UINT8_MAX) {
     error(parser, "Too many upvalues in a function.");
     return 0;
   }
@@ -657,12 +657,12 @@ static void function(struct Parser* parser, enum FunctionType type, bool isLambd
   if (match(parser, TOKEN_LPAREN)) {
     if (!check(parser, TOKEN_RPAREN)) {
       do {
-        parser->compiler->function->arity++;
-        if (parser->compiler->function->arity > UINT8_MAX) {
+        if (parser->compiler->function->arity == UINT8_MAX) {
           errorAtCurrent(parser, "Too many parameters. Max is 255.");
           advance(parser);
           break;
         }
+        parser->compiler->function->arity++;
         u8 constant = parseVariable(parser, false, "Expected variable name.");
         defineVariable(parser, constant, false);
       } while (match(parser, TOKEN_COMMA));

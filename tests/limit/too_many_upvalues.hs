@@ -32,7 +32,7 @@ func f() {
     var ve0; var ve1; var ve2; var ve3; var ve4; var ve5; var ve6; var ve7;
     var ve8; var ve9; var vea; var veb; var vec; var ved; var vee; var vef;
     var vf0; var vf1; var vf2; var vf3; var vf4; var vf5; var vf6; var vf7;
-    var vf8; var vf9; var vfa; var vfb; var vfc; var vfd; var vfe; var vff;
+    var vf8; var vf9; var vfa; var vfb; var vfc; var vfd; var vfe;
 
     var oops;
 
@@ -68,8 +68,7 @@ func f() {
       ve0; ve1; ve2; ve3; ve4; ve5; ve6; ve7;
       ve8; ve9; vea; veb; vec; ved; vee; vef;
       vf0; vf1; vf2; vf3; vf4; vf5; vf6; vf7;
-      vf8; vf9; vfa; vfb; vfc; vfd; vfe; vff;
-
+      vf8; vf9; vfa; vfb; vfc; vfd; vfe;
       oops; // expect error
     };
   };
