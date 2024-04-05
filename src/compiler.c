@@ -658,7 +658,7 @@ static void function(struct Parser* parser, enum FunctionType type, bool isLambd
     if (!check(parser, TOKEN_RPAREN)) {
       do {
         parser->compiler->function->arity++;
-        if (parser->compiler->function->arity == UINT8_MAX) {
+        if (parser->compiler->function->arity > UINT8_MAX) {
           errorAtCurrent(parser, "Too many parameters. Max is 255.");
           advance(parser);
           break;
