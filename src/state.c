@@ -11,12 +11,14 @@
 
 static void wrap_print(struct hl_State* H, s32 argCount) {
   for (s32 i = 0; i < argCount; i++) {
-    printf("%s", hl_toString(H, i, NULL));
+    size_t length;
+    const char* str = hl_toString(H, i, &length);
+    fwrite(str, sizeof(char), length, stdout);
     if (i != argCount - 1) {
       putc('\t', stdout);
     }
   }
-  printf("\n");
+  putc('\n', stdout);
   hl_pushNil(H);
 }
 
