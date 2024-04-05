@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "memory.h"
+#include "tostring.h"
 
 void initValueArray(struct ValueArray* array) {
   array->capacity = 0;
@@ -57,16 +58,9 @@ void freeValueArray(struct hs_State* H, struct ValueArray* array) {
   initValueArray(array);
 }
 
-void printValue(Value value) {
-  if (IS_BOOL(value)) {
-    printf(AS_BOOL(value) ? "true" : "false");
-  } else if (IS_NIL(value)) {
-    printf("nil");
-  } else if (IS_NUMBER(value)) {
-    printf("%.14g", AS_NUMBER(value));
-  } else if (IS_OBJ(value)) {
-    printObject(value);
-  }
+void printValue(struct hs_State* H, Value value) {
+  struct GcString* str = toString(H, &value);
+  fwrite(str->chars, sizeof(char), str->length, stdout);
 }
 
 bool valuesEqual(Value a, Value b) {

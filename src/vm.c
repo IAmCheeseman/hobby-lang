@@ -308,12 +308,12 @@ static enum InterpretResult run(struct hs_State* H) {
     printf("        | ");
     for (Value* slot = H->stack; slot < H->stackTop; slot++) {
       printf("[ ");
-      printValue(*slot);
+      printValue(H, *slot);
       printf(" ]");
     }
     printf("\n");
     disassembleInstruction(
-        frame->func->function, (s32)(frame->ip - frame->func->function->bc));
+        H, frame->func->function, (s32)(frame->ip - frame->func->function->bc));
 #endif
     u8 instruction;
     switch (instruction = READ_BYTE()) {

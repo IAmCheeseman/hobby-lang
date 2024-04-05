@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "hobbylang.h"
+#include "hobbyscript.h"
 #include "memory.h"
 #include "compiler.h"
 #include "object.h"

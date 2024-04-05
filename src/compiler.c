@@ -205,7 +205,7 @@ static struct GcBcFunction* endCompiler(struct Parser* parser) {
 #ifdef DEBUG_PRINT_CODE
   if (!parser->hadError) {
     disassembleFunction(
-        parser->compiler->function,
+        parser->H, parser->compiler->function,
         function, function->name != NULL ? function->name->chars : "<script>");
   }
 #endif

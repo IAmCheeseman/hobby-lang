@@ -4,7 +4,7 @@
 
 #include "common.h"
 #include "vm.h"
-#include "hobbylang.h"
+#include "hobbyscript.h"
 
 static void repl(struct hs_State* H) {
   char line[1024];

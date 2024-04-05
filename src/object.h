@@ -4,7 +4,7 @@
 #include <string.h>
 
 #include "common.h"
-#include "hobbylang.h"
+#include "hobbyscript.h"
 
 #define OBJ_TYPE(value)        (AS_OBJ(value)->type)
 
@@ -208,7 +208,7 @@ void copyValueArray(struct hs_State* H, struct ValueArray* dest, struct ValueArr
 void writeValueArray(struct hs_State* H, struct ValueArray* array, Value value);
 void freeValueArray(struct hs_State* H, struct ValueArray* array);
 void reserveValueArray(struct hs_State* H, struct ValueArray* array, s32 size);
-void printValue(Value value);
+void printValue(struct hs_State* H, Value value);
 bool valuesEqual(Value a, Value b);
 
 struct GcArray* newArray(struct hs_State* H);
@@ -227,8 +227,6 @@ struct GcBoundMethod* newBoundMethod(
 void writeBytecode(struct hs_State* H, struct GcBcFunction* function, u8 byte, s32 line);
 s32 addFunctionConstant(
     struct hs_State* H, struct GcBcFunction* function, Value value);
-
-void printObject(Value value);
 
 static inline bool isObjOfType(Value value, enum ObjType type) {
   return IS_OBJ(value) && AS_OBJ(value)->type == type;

@@ -4,7 +4,11 @@
 #include "common.h"
 #include "object.h"
 
-void disassembleFunction(struct GcBcFunction* function, void* functionPointer, const char* name);
-s32 disassembleInstruction(struct GcBcFunction* function, s32 offset);
+void disassembleFunction(
+  struct hs_State* H, 
+  struct GcBcFunction* function, void* functionPointer, const char* name);
+s32 disassembleInstruction(
+  struct hs_State* H,
+  struct GcBcFunction* function, s32 offset);
 
 #endif // _HOBBYSCRIPT_DEBUG_H
