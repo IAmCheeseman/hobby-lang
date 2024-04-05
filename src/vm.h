@@ -1,5 +1,5 @@
-#ifndef _HOBBYL_VM_H
-#define _HOBBYL_VM_H
+#ifndef _HOBBYSCRIPT_VM_H
+#define _HOBBYSCRIPT_VM_H
 
 #include "object.h"
 
@@ -9,7 +9,7 @@ enum InterpretResult {
   RUNTIME_ERR,
 };
 
-void bindCFunction(struct hl_State* H, const char* name, hl_CFunction cFunction);
-enum InterpretResult interpret(struct hl_State* H, const char* source);
+void bindCFunction(struct hs_State* H, const char* name, hs_CFunction cFunction);
+enum InterpretResult interpret(struct hs_State* H, const char* source);
 
-#endif // _HOBBYL_VM_H
+#endif // _HOBBYSCRIPT_VM_H

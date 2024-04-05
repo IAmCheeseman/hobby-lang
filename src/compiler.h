@@ -1,5 +1,5 @@
-#ifndef _HOBBYL_COMPILER_H
-#define _HOBBYL_COMPILER_H
+#ifndef _HOBBYSCRIPT_COMPILER_H
+#define _HOBBYSCRIPT_COMPILER_H
 
 #include "tokenizer.h"
 #include "object.h"
@@ -55,7 +55,7 @@ struct StructCompiler {
 };
 
 struct Parser {
-  struct hl_State* H;
+  struct hs_State* H;
   struct Token current;
   struct Token previous;
   struct Compiler* compiler;
@@ -65,7 +65,7 @@ struct Parser {
   bool panicMode;
 };
 
-struct GcBcFunction* compile(struct hl_State* H, struct Parser* parser, const char* source);
-void markCompilerRoots(struct hl_State* H, struct Parser* parser);
+struct GcBcFunction* compile(struct hs_State* H, struct Parser* parser, const char* source);
+void markCompilerRoots(struct hs_State* H, struct Parser* parser);
 
-#endif // _HOBBYL_COMPILER_H
+#endif // _HOBBYSCRIPT_COMPILER_H

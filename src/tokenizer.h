@@ -1,5 +1,5 @@
-#ifndef _HOBBYL_TOKENIZER_H
-#define _HOBBYL_TOKENIZER_H
+#ifndef _HOBBYSCRIPT_TOKENIZER_H
+#define _HOBBYSCRIPT_TOKENIZER_H
 
 #include "common.h"
 #include "object.h"
@@ -50,7 +50,7 @@ struct Token {
 };
 
 struct Tokenizer {
-  struct hl_State* H;
+  struct hs_State* H;
   const char* start;
   const char* end;
   struct Token prev;
@@ -58,7 +58,7 @@ struct Tokenizer {
   s32 line;
 };
 
-void initTokenizer(struct hl_State* H, struct Tokenizer* tokenizer, const char* source);
+void initTokenizer(struct hs_State* H, struct Tokenizer* tokenizer, const char* source);
 struct Token nextToken(struct Tokenizer* tokenizer);
 
-#endif // _HOBBYL_TOKENIZER_H
+#endif // _HOBBYSCRIPT_TOKENIZER_H

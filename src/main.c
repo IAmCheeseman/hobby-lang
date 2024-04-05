@@ -6,7 +6,7 @@
 #include "vm.h"
 #include "hobbylang.h"
 
-static void repl(struct hl_State* H) {
+static void repl(struct hs_State* H) {
   char line[1024];
 
   while (true) {
@@ -49,7 +49,7 @@ static char* readFile(const char* path) {
   return buffer;
 }
 
-static void runFile(struct hl_State* H, const char* path) {
+static void runFile(struct hs_State* H, const char* path) {
   char* source = readFile(path);
   enum InterpretResult result = interpret(H, source);
   free(source);
@@ -66,7 +66,7 @@ static void runFile(struct hl_State* H, const char* path) {
 }
 
 s32 main(s32 argc, const char* args[]) {
-  struct hl_State* H = hl_newState();
+  struct hs_State* H = hs_newState();
 
   if (argc == 1) {
     repl(H);
@@ -77,7 +77,7 @@ s32 main(s32 argc, const char* args[]) {
     exit(1);
   }
 
-  hl_freeState(H);
+  hs_freeState(H);
   return 0;
 }
 

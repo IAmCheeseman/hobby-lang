@@ -11,11 +11,11 @@
 
 #define NUMBER_FORMAT "%.14g"
 
-static struct GcString* functionToString(struct hl_State* H, struct GcBcFunction* func) {
+static struct GcString* functionToString(struct hs_State* H, struct GcBcFunction* func) {
   return strFormat(H, "<function @>", func->name);
 }
 
-struct GcString* toString(struct hl_State* H, Value* value) {
+struct GcString* toString(struct hs_State* H, Value* value) {
   if (value == NULL) {
     return copyString(H, "Null", 4);
   }
@@ -49,7 +49,7 @@ struct GcString* toString(struct hl_State* H, Value* value) {
   return copyString(H, "unknown", 7);
 }
 
-struct GcString* numToString(struct hl_State* H, f64 num) {
+struct GcString* numToString(struct hs_State* H, f64 num) {
   if (isnan(num)) {
     return copyString(H, "nan", 3);
   }
@@ -68,11 +68,11 @@ struct GcString* numToString(struct hl_State* H, f64 num) {
   return takeString(H, string, len);
 }
 
-struct GcString* boolToString(struct hl_State* H, bool b) {
+struct GcString* boolToString(struct hs_State* H, bool b) {
   return b ? copyString(H, "true", 4) : copyString(H, "false", 5);
 }
 
-struct GcString* strFormat(struct hl_State* H, const char* format, ...) {
+struct GcString* strFormat(struct hs_State* H, const char* format, ...) {
   va_list args;
 
   va_start(args, format);

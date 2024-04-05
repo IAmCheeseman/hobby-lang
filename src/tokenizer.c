@@ -7,7 +7,7 @@
 #include "memory.h"
 #include "object.h"
 
-void initTokenizer(struct hl_State* H, struct Tokenizer* tokenizer, const char* source) {
+void initTokenizer(struct hs_State* H, struct Tokenizer* tokenizer, const char* source) {
   // Skip UTF8 BOM
   if (strncmp(source, "\xEF\xBB\xBF", 3) == 0) {
     source += 3;

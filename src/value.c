@@ -11,7 +11,7 @@ void initValueArray(struct ValueArray* array) {
   array->values = NULL;
 }
 
-void copyValueArray(struct hl_State* H, struct ValueArray* dest, struct ValueArray* src) {
+void copyValueArray(struct hs_State* H, struct ValueArray* dest, struct ValueArray* src) {
   initValueArray(dest);
 
   dest->count = src->count;
@@ -23,7 +23,7 @@ void copyValueArray(struct hl_State* H, struct ValueArray* dest, struct ValueArr
   }
 }
 
-void writeValueArray(struct hl_State* H, struct ValueArray* array, Value value) {
+void writeValueArray(struct hs_State* H, struct ValueArray* array, Value value) {
   if (array->capacity < array->count + 1) {
     s32 oldCapacity = array->capacity;
     array->capacity = GROW_CAPACITY(oldCapacity);
@@ -34,7 +34,7 @@ void writeValueArray(struct hl_State* H, struct ValueArray* array, Value value) 
   array->values[array->count++] = value;
 }
 
-void reserveValueArray(struct hl_State* H, struct ValueArray* array, s32 size) {
+void reserveValueArray(struct hs_State* H, struct ValueArray* array, s32 size) {
   // Make sure the numbers stays at a power of 2.
   // http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2Float
   size--;
@@ -52,7 +52,7 @@ void reserveValueArray(struct hl_State* H, struct ValueArray* array, s32 size) {
       H, Value, array->values, oldCapacity, array->capacity);
 }
 
-void freeValueArray(struct hl_State* H, struct ValueArray* array) {
+void freeValueArray(struct hs_State* H, struct ValueArray* array) {
   FREE_ARRAY(H, Value, array->values, array->capacity);
   initValueArray(array);
 }

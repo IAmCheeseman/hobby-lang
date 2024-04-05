@@ -14,7 +14,7 @@ void initTable(struct Table* table) {
   table->entries = NULL;
 }
 
-void freeTable(struct hl_State* H, struct Table* table) {
+void freeTable(struct hs_State* H, struct Table* table) {
   FREE_ARRAY(H, struct TableEntry, table->entries, table->capacity);
   initTable(table);
 }
@@ -43,7 +43,7 @@ static struct TableEntry* findEntry(
   }
 }
 
-static void adjustCapacity(struct hl_State* H, struct Table* table, s32 capacity) {
+static void adjustCapacity(struct hs_State* H, struct Table* table, s32 capacity) {
   struct TableEntry* entries = ALLOCATE(H, struct TableEntry, capacity);
   for (s32 i = 0; i < capacity; i++) {
     entries[i].key = NULL;
@@ -70,7 +70,7 @@ static void adjustCapacity(struct hl_State* H, struct Table* table, s32 capacity
 }
 
 bool tableSet(
-    struct hl_State* H, struct Table* table, struct GcString* key, Value value) {
+    struct hs_State* H, struct Table* table, struct GcString* key, Value value) {
   if (table->count + 1 > table->capacity * TABLE_MAX_LOAD) {
     s32 capacity = GROW_CAPACITY(table->capacity);
     adjustCapacity(H, table, capacity);
@@ -149,7 +149,7 @@ void tableRemoveUnmarked(struct Table* table) {
   }
 }
 
-void markTable(struct hl_State* H, struct Table* table) {
+void markTable(struct hs_State* H, struct Table* table) {
   for (s32 i = 0; i < table->capacity; i++) {
     struct TableEntry* entry = &table->entries[i];
     markObject(H, (struct GcObj*)entry->key);
@@ -157,7 +157,7 @@ void markTable(struct hl_State* H, struct Table* table) {
   }
 }
 
-void copyTable(struct hl_State* H, struct Table* dest, struct Table* src) {
+void copyTable(struct hs_State* H, struct Table* dest, struct Table* src) {
   for (s32 i = 0; i < src->capacity; i++) {
     struct TableEntry* entry = &src->entries[i];
     if (entry->key != NULL) {

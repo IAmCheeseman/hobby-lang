@@ -17,7 +17,7 @@
 
 #include "debug.h"
 
-static void runtimeError(struct hl_State* H, const char* format, ...) {
+static void runtimeError(struct hs_State* H, const char* format, ...) {
   for (s32 i = 0; i < H->frameCount; i++) {
     struct CallFrame* frame = &H->frames[i];
     struct GcBcFunction* function = frame->func->closure.function;
@@ -39,24 +39,24 @@ static void runtimeError(struct hl_State* H, const char* format, ...) {
   resetStack(H);
 }
 
-UNUSED static Value wrap_print(struct hl_State* H) {
+UNUSED static Value wrap_print(struct hs_State* H) {
   printValue(peek(H, 0));
   printf("\n");
   return NEW_NIL;
 }
 
-UNUSED static Value wrap_clock(UNUSED struct hl_State* H) {
+UNUSED static Value wrap_clock(UNUSED struct hs_State* H) {
   return NEW_NUMBER((f64)clock() / CLOCKS_PER_SEC);
 }
 
-UNUSED static Value wrap_explode(UNUSED struct hl_State* H) {
+UNUSED static Value wrap_explode(UNUSED struct hs_State* H) {
   // explodes the interpreter.
   // Returns true on success :^)
   *((int*)(size_t)rand()) = 0;
   return NEW_BOOL(true);
 }
 
-static bool call(struct hl_State* H, struct GcClosure* closure, s32 argCount) {
+static bool call(struct hs_State* H, struct GcClosure* closure, s32 argCount) {
   if (argCount != closure->function->arity) {
     runtimeError(H, "Expected %d arguments, but got %d.", closure->function->arity, argCount);
     return false;
@@ -74,7 +74,7 @@ static bool call(struct hl_State* H, struct GcClosure* closure, s32 argCount) {
   return true;
 }
 
-static bool callCFunc(struct hl_State* H, struct GcCFunction* func, s32 argCount) {
+static bool callCFunc(struct hs_State* H, struct GcCFunction* func, s32 argCount) {
   if (argCount != func->arity && func->arity != -1) {
     runtimeError(H, "Expected %d arguments, but got %d.",
       func->arity, argCount);
@@ -96,7 +96,7 @@ static bool callCFunc(struct hl_State* H, struct GcCFunction* func, s32 argCount
   return true;
 }
 
-static bool callValue(struct hl_State* H, Value callee, s32 argCount) {
+static bool callValue(struct hs_State* H, Value callee, s32 argCount) {
   if (IS_OBJ(callee)) {
     switch (OBJ_TYPE(callee)) {
       case OBJ_BOUND_METHOD: {
@@ -118,7 +118,7 @@ static bool callValue(struct hl_State* H, Value callee, s32 argCount) {
 }
 
 static bool invokeFromStruct(
-    struct hl_State* H,
+    struct hs_State* H,
     struct GcStruct* strooct, struct GcString* name, s32 argCount) {
   Value method;
   if (!tableGet(&strooct->methods, name, &method)) {
@@ -129,7 +129,7 @@ static bool invokeFromStruct(
   return call(H, AS_CLOSURE(method), argCount);
 }
 
-static bool invoke(struct hl_State* H, struct GcString* name, s32 argCount) {
+static bool invoke(struct hs_State* H, struct GcString* name, s32 argCount) {
   Value receiver = peek(H, argCount);
   if (!IS_INSTANCE(receiver)) {
     runtimeError(H, "Only instances have methods.");
@@ -147,7 +147,7 @@ static bool invoke(struct hl_State* H, struct GcString* name, s32 argCount) {
   return invokeFromStruct(H, instance->strooct, name, argCount);
 }
 
-static bool bindMethod(struct hl_State* H, struct GcStruct* strooct, struct GcString* name) {
+static bool bindMethod(struct hs_State* H, struct GcStruct* strooct, struct GcString* name) {
   Value method;
   if (!tableGet(&strooct->methods, name, &method)) {
     runtimeError(H, "Undefined property '%s'.", name->chars);
@@ -160,7 +160,7 @@ static bool bindMethod(struct hl_State* H, struct GcStruct* strooct, struct GcSt
   return true;
 }
 
-static struct GcUpvalue* captureUpvalue(struct hl_State* H, Value* local) {
+static struct GcUpvalue* captureUpvalue(struct hs_State* H, Value* local) {
   struct GcUpvalue* previous = NULL;
   struct GcUpvalue* current = H->openUpvalues;
   while (current != NULL && current->location > local) {
@@ -184,7 +184,7 @@ static struct GcUpvalue* captureUpvalue(struct hl_State* H, Value* local) {
   return createdUpvalue;
 }
 
-static void closeUpvalues(struct hl_State* H, Value* last) {
+static void closeUpvalues(struct hs_State* H, Value* last) {
   while (H->openUpvalues != NULL && H->openUpvalues->location >= last) {
     struct GcUpvalue* upvalue = H->openUpvalues;
     upvalue->closed = *upvalue->location;
@@ -193,13 +193,13 @@ static void closeUpvalues(struct hl_State* H, Value* last) {
   }
 }
 
-static void defineMethod(struct hl_State* H, struct GcString* name, struct Table* table) {
+static void defineMethod(struct hs_State* H, struct GcString* name, struct Table* table) {
   Value method = peek(H, 0);
   tableSet(H, table, name, method);
   pop(H);
 }
 
-static bool setProperty(struct hl_State* H, struct GcString* name) {
+static bool setProperty(struct hs_State* H, struct GcString* name) {
   if (!IS_INSTANCE(peek(H, 1))) {
     runtimeError(H, "Can only use dot operator on instances.");
     return false;
@@ -214,7 +214,7 @@ static bool setProperty(struct hl_State* H, struct GcString* name) {
   return true;
 }
 
-static bool getProperty(struct hl_State* H, Value object, struct GcString* name, bool popValue) {
+static bool getProperty(struct hs_State* H, Value object, struct GcString* name, bool popValue) {
   if (IS_OBJ(object)) {
     switch (OBJ_TYPE(object)) {
       case OBJ_INSTANCE: {
@@ -243,7 +243,7 @@ static bool getProperty(struct hl_State* H, Value object, struct GcString* name,
   return false;
 }
 
-static bool getStatic(struct hl_State* H, Value object, struct GcString* name) {
+static bool getStatic(struct hs_State* H, Value object, struct GcString* name) {
   if (IS_OBJ(object)) {
     switch (OBJ_TYPE(object)) {
       case OBJ_STRUCT: {
@@ -285,7 +285,7 @@ static bool isFalsey(Value value) {
   return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
 }
 
-static void concatenate(struct hl_State* H) {
+static void concatenate(struct hs_State* H) {
   struct GcString* b = AS_STRING(peek(H, 0));
   struct GcString* a = AS_STRING(peek(H, 1));
 
@@ -302,7 +302,7 @@ static void concatenate(struct hl_State* H) {
   push(H, NEW_OBJ(result));
 }
 
-static enum InterpretResult run(struct hl_State* H) {
+static enum InterpretResult run(struct hs_State* H) {
 #define READ_BYTE() (*frame->ip++)
 #define READ_SHORT() (frame->ip += 2, (u16)((frame->ip[-2] << 8) | frame->ip[-1]))
 #define READ_CONSTANT() (frame->func->closure.function->constants.values[READ_BYTE()])
@@ -695,7 +695,7 @@ static enum InterpretResult run(struct hl_State* H) {
 #undef BINARY_OP
 }
 
-enum InterpretResult interpret(struct hl_State* H, const char* source) {
+enum InterpretResult interpret(struct hs_State* H, const char* source) {
   struct GcBcFunction* function = compile(H, H->parser, source);
   if (function == NULL) {
     return COMPILE_ERR;

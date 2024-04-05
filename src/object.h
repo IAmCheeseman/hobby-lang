@@ -1,5 +1,5 @@
-#ifndef _HOBBYL_OBJECT_H
-#define _HOBBYL_OBJECT_H
+#ifndef _HOBBYSCRIPT_OBJECT_H
+#define _HOBBYSCRIPT_OBJECT_H
 
 #include <string.h>
 
@@ -140,7 +140,7 @@ struct GcUpvalue {
 
 struct GcCFunction {
   struct GcObj obj;
-  hl_CFunction cFunc;
+  hs_CFunction cFunc;
   s32 arity;
 };
 
@@ -209,29 +209,29 @@ struct GcArray {
 };
 
 void initValueArray(struct ValueArray* array);
-void copyValueArray(struct hl_State* H, struct ValueArray* dest, struct ValueArray* src);
-void writeValueArray(struct hl_State* H, struct ValueArray* array, Value value);
-void freeValueArray(struct hl_State* H, struct ValueArray* array);
-void reserveValueArray(struct hl_State* H, struct ValueArray* array, s32 size);
+void copyValueArray(struct hs_State* H, struct ValueArray* dest, struct ValueArray* src);
+void writeValueArray(struct hs_State* H, struct ValueArray* array, Value value);
+void freeValueArray(struct hs_State* H, struct ValueArray* array);
+void reserveValueArray(struct hs_State* H, struct ValueArray* array, s32 size);
 void printValue(Value value);
 bool valuesEqual(Value a, Value b);
 
-struct GcArray* newArray(struct hl_State* H);
-struct GcEnum* newEnum(struct hl_State* H, struct GcString* name);
-struct GcString* copyString(struct hl_State* H, const char* chars, int length);
-struct GcString* takeString(struct hl_State* H, char* chars, int length);
-struct GcStruct* newStruct(struct hl_State* H, struct GcString* name);
-struct GcInstance* newInstance(struct hl_State* H, struct GcStruct* strooct);
+struct GcArray* newArray(struct hs_State* H);
+struct GcEnum* newEnum(struct hs_State* H, struct GcString* name);
+struct GcString* copyString(struct hs_State* H, const char* chars, int length);
+struct GcString* takeString(struct hs_State* H, char* chars, int length);
+struct GcStruct* newStruct(struct hs_State* H, struct GcString* name);
+struct GcInstance* newInstance(struct hs_State* H, struct GcStruct* strooct);
 
-struct GcClosure* newClosure(struct hl_State* H, struct GcBcFunction* function);
-struct GcUpvalue* newUpvalue(struct hl_State* H, Value* slot);
-struct GcBcFunction* newBcFunction(struct hl_State* H);
-struct GcCFunction* newCFunction(struct hl_State* H, hl_CFunction cFunc, int argCount);
+struct GcClosure* newClosure(struct hs_State* H, struct GcBcFunction* function);
+struct GcUpvalue* newUpvalue(struct hs_State* H, Value* slot);
+struct GcBcFunction* newBcFunction(struct hs_State* H);
+struct GcCFunction* newCFunction(struct hs_State* H, hs_CFunction cFunc, int argCount);
 struct GcBoundMethod* newBoundMethod(
-    struct hl_State* H, Value receiver, struct GcClosure* method);
-void writeBytecode(struct hl_State* H, struct GcBcFunction* function, u8 byte, s32 line);
+    struct hs_State* H, Value receiver, struct GcClosure* method);
+void writeBytecode(struct hs_State* H, struct GcBcFunction* function, u8 byte, s32 line);
 s32 addFunctionConstant(
-    struct hl_State* H, struct GcBcFunction* function, Value value);
+    struct hs_State* H, struct GcBcFunction* function, Value value);
 
 void printObject(Value value);
 
@@ -239,4 +239,4 @@ static inline bool isObjOfType(Value value, enum ObjType type) {
   return IS_OBJ(value) && AS_OBJ(value)->type == type;
 }
 
-#endif // _HOBBYL_OBJECT_H
+#endif // _HOBBYSCRIPT_OBJECT_H

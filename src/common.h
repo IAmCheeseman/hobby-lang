@@ -1,5 +1,5 @@
-#ifndef _HOBBYL_COMMON_H
-#define _HOBBYL_COMMON_H
+#ifndef _HOBBYSCRIPT_COMMON_H
+#define _HOBBYSCRIPT_COMMON_H
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -30,4 +30,4 @@ typedef int64_t  s64;
 typedef float    f32;
 typedef double   f64;
 
-#endif // _HOBBYL_COMMON_H
+#endif // _HOBBYSCRIPT_COMMON_H

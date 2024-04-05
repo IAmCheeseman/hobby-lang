@@ -20,7 +20,7 @@ parser.add_argument('suite', nargs='?')
 
 args = parser.parse_args(sys.argv[1:])
 
-HL_APP = './bin/hl_debug' + args.suffix
+HL_APP = './bin/hs_debug' + args.suffix
 
 EXPECT_PATTERN = re.compile(r'// expect: ?(.*)')
 EXPECT_ERROR_PATTERN = re.compile(r'// expect error(?! line)')
@@ -333,7 +333,7 @@ def run_script(app, path, type):
     global failed
     global num_skipped
 
-    if (splitext(path)[1] != '.hl'):
+    if (splitext(path)[1] != '.hs'):
         return
 
     # Check if we are just running a subset of the tests.

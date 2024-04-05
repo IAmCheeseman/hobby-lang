@@ -1,12 +1,11 @@
 import timeit
 
-HL_APP = './bin/hl_release'
 BENCHMARK_PATH = 'benchmark/'
 
 ITERATE_COUNT = 5
 
 LANGUAGES = [
-    ("hobby", "./bin/hl_release", ".hl"),
+    ("hobby", "./bin/hs_release", ".hs"),
     ("lua", "lua", ".lua"),
     ("python", "python3", ".py"),
 ]

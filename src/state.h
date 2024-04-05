@@ -1,5 +1,5 @@
-#ifndef _HOBBYL_STATE_H
-#define _HOBBYL_STATE_H
+#ifndef _HOBBYSCRIPT_STATE_H
+#define _HOBBYSCRIPT_STATE_H
 
 #include "object.h"
 #include "common.h"
@@ -13,7 +13,7 @@ struct CallFrame {
   Value* slots;
 };
 
-struct hl_State {
+struct hs_State {
   struct CallFrame frames[FRAMES_MAX];
   s32 frameCount;
 
@@ -35,9 +35,9 @@ struct hl_State {
   struct Parser* parser;
 };
 
-void resetStack(struct hl_State* H);
-void push(struct hl_State* H, Value value);
-Value pop(struct hl_State* H);
-Value peek(struct hl_State* H, s32 distance);
+void resetStack(struct hs_State* H);
+void push(struct hs_State* H, Value value);
+Value pop(struct hs_State* H);
+Value peek(struct hs_State* H, s32 distance);
 
-#endif // _HOBBYL_STATE_H
+#endif // _HOBBYSCRIPT_STATE_H

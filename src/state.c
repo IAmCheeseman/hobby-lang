@@ -9,26 +9,32 @@
 #include "table.h"
 #include "tostring.h"
 
-static void wrap_print(struct hl_State* H, s32 argCount) {
+static void wrap_print(struct hs_State* H, s32 argCount) {
   for (s32 i = 0; i < argCount; i++) {
     size_t length;
-    const char* str = hl_toString(H, i, &length);
+    const char* str = hs_toString(H, i, &length);
     fwrite(str, sizeof(char), length, stdout);
     if (i != argCount - 1) {
       putc('\t', stdout);
     }
   }
   putc('\n', stdout);
-  hl_pushNil(H);
+  hs_pushNil(H);
 }
 
-void resetStack(struct hl_State* H) {
+static void wrap_toString(struct hs_State* H, UNUSED s32 argCount) {
+  size_t length;
+  const char* str = hs_toString(H, 0, &length);
+  hs_pushString(H, str, length);
+}
+
+void resetStack(struct hs_State* H) {
   H->stackTop = H->stack;
   H->frameCount = 0;
   H->openUpvalues = NULL;
 }
 
-static Value* getValueAt(struct hl_State* H, s32 index) {
+static Value* getValueAt(struct hs_State* H, s32 index) {
   if (index >= 0) {
     Value* value = H->frames[H->frameCount - 1].slots + index + 1;
     return (value > H->stackTop) ? NULL : value;
@@ -38,22 +44,22 @@ static Value* getValueAt(struct hl_State* H, s32 index) {
   return (value > H->stackTop) ? NULL : value;
 }
 
-void push(struct hl_State* H, Value value) {
+void push(struct hs_State* H, Value value) {
   *H->stackTop = value;
   H->stackTop++;
 }
 
-Value pop(struct hl_State* H) {
+Value pop(struct hs_State* H) {
   H->stackTop--;
   return *H->stackTop;
 }
 
-Value peek(struct hl_State* H, s32 distance) {
+Value peek(struct hs_State* H, s32 distance) {
   return H->stackTop[-1 - distance];
 }
 
-struct hl_State* hl_newState() {
-  struct hl_State* H = malloc(sizeof(struct hl_State));
+struct hs_State* hs_newState() {
+  struct hs_State* H = malloc(sizeof(struct hs_State));
 
   H->objects = NULL;
   H->parser = ALLOCATE(H, struct Parser, 1);
@@ -66,13 +72,16 @@ struct hl_State* hl_newState() {
   initTable(&H->strings);
   initTable(&H->globals);
 
-  hl_pushCFunction(H, wrap_print, -1);
-  hl_setGlobal(H, "print");
+  hs_pushCFunction(H, wrap_print, -1);
+  hs_setGlobal(H, "print");
+
+  hs_pushCFunction(H, wrap_toString, 1);
+  hs_setGlobal(H, "toString");
 
   return H;
 }
 
-void hl_freeState(struct hl_State* H) {
+void hs_freeState(struct hs_State* H) {
   freeTable(H, &H->strings);
   freeTable(H, &H->globals);
   freeObjects(H);
@@ -81,42 +90,42 @@ void hl_freeState(struct hl_State* H) {
   free(H);
 }
 
-void hl_pop(struct hl_State* H) {
+void hs_pop(struct hs_State* H) {
   pop(H);
 }
 
-void hl_setGlobal(struct hl_State* H, const char* name) {
+void hs_setGlobal(struct hs_State* H, const char* name) {
   push(H, NEW_OBJ(copyString(H, name, strlen(name))));
   tableSet(H, &H->globals, AS_STRING(peek(H, 0)), peek(H, 1));
   pop(H); // name
   pop(H); // value
 }
 
-void hl_pushNil(struct hl_State* H) {
+void hs_pushNil(struct hs_State* H) {
   push(H, NEW_NIL);
 }
 
-void hl_pushNumber(struct hl_State* H, double v) {
+void hs_pushNumber(struct hs_State* H, double v) {
   push(H, NEW_NUMBER(v));
 }
 
-void hl_pushBoolean(struct hl_State* H, bool v) {
+void hs_pushBoolean(struct hs_State* H, bool v) {
   push(H, NEW_BOOL(v));
 }
 
-void hl_pushString(struct hl_State* H, const char* str, size_t length) {
+void hs_pushString(struct hs_State* H, const char* str, size_t length) {
   push(H, NEW_OBJ(copyString(H, str, length)));
 }
 
-void hl_pushOwnedString(struct hl_State* H, char* str, size_t length) {
+void hs_pushOwnedString(struct hs_State* H, char* str, size_t length) {
   push(H, NEW_OBJ(takeString(H, str, length)));
 }
 
-void hl_pushCFunction(struct hl_State* H, hl_CFunction function, int argCount) {
+void hs_pushCFunction(struct hs_State* H, hs_CFunction function, int argCount) {
   push(H, NEW_OBJ(newCFunction(H, function, argCount)));
 }
 
-bool hl_isString(struct hl_State* H, int index) {
+bool hs_isString(struct hs_State* H, int index) {
   Value* v = getValueAt(H, index);
   if (v == NULL) {
     return false;
@@ -124,7 +133,7 @@ bool hl_isString(struct hl_State* H, int index) {
   return IS_STRING(*v);
 }
 
-const char* hl_toString(struct hl_State* H, int index, size_t* length) {
+const char* hs_toString(struct hs_State* H, int index, size_t* length) {
   Value* v = getValueAt(H, index);
   if (v == NULL) {
     if (length != NULL) {

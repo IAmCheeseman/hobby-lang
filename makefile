@@ -35,7 +35,7 @@ SRC = src/main.c src/memory.c src/debug.c src/value.c src/vm.c \
 OBJ = $(SRC:%.c=$(BUILD)/%_$(PROFILE).o)
 
 DEPENDS = $(OBJ:.o=.d)
-EXE = $(BUILD)/hl_$(PROFILE)
+EXE = $(BUILD)/hs_$(PROFILE)
 
 .PHONY: clean compile_flags
 

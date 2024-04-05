@@ -12,7 +12,7 @@
 #define ALLOCATE_OBJ(H, type, objectType) \
     (type*)allocateObject(H, sizeof(type), objectType)
 
-static struct GcObj* allocateObject(struct hl_State* H, size_t size, enum ObjType type) {
+static struct GcObj* allocateObject(struct hs_State* H, size_t size, enum ObjType type) {
   struct GcObj* object = (struct GcObj*)reallocate(H, NULL, 0, size);
   object->type = type;
   object->isMarked = false;
@@ -27,13 +27,13 @@ static struct GcObj* allocateObject(struct hl_State* H, size_t size, enum ObjTyp
   return object;
 }
 
-struct GcArray* newArray(struct hl_State* H) {
+struct GcArray* newArray(struct hs_State* H) {
   struct GcArray* array = ALLOCATE_OBJ(H, struct GcArray, OBJ_ARRAY);
   initValueArray(&array->values);
   return array;
 }
 
-struct GcEnum* newEnum(struct hl_State* H, struct GcString* name) {
+struct GcEnum* newEnum(struct hs_State* H, struct GcString* name) {
   struct GcEnum* enoom = ALLOCATE_OBJ(H, struct GcEnum, OBJ_ENUM);
   enoom->name = name;
   initTable(&enoom->values);
@@ -41,14 +41,14 @@ struct GcEnum* newEnum(struct hl_State* H, struct GcString* name) {
 }
 
 struct GcBoundMethod* newBoundMethod(
-    struct hl_State* H, Value receiver, struct GcClosure* method) {
+    struct hs_State* H, Value receiver, struct GcClosure* method) {
   struct GcBoundMethod* bound = ALLOCATE_OBJ(H, struct GcBoundMethod, OBJ_BOUND_METHOD);
   bound->receiver = receiver;
   bound->method = method;
   return bound;
 }
 
-struct GcStruct* newStruct(struct hl_State* H, struct GcString* name) {
+struct GcStruct* newStruct(struct hs_State* H, struct GcString* name) {
   struct GcStruct* strooct = ALLOCATE_OBJ(H, struct GcStruct, OBJ_STRUCT);
 
   strooct->name = name;
@@ -58,7 +58,7 @@ struct GcStruct* newStruct(struct hl_State* H, struct GcString* name) {
   return strooct;
 }
 
-struct GcInstance* newInstance(struct hl_State* H, struct GcStruct* strooct) {
+struct GcInstance* newInstance(struct hs_State* H, struct GcStruct* strooct) {
   struct GcInstance* instance = ALLOCATE_OBJ(H, struct GcInstance, OBJ_INSTANCE);
   instance->strooct = strooct;
   initTable(&instance->fields);
@@ -66,7 +66,7 @@ struct GcInstance* newInstance(struct hl_State* H, struct GcStruct* strooct) {
   return instance;
 }
 
-struct GcClosure* newClosure(struct hl_State* H, struct GcBcFunction* function) {
+struct GcClosure* newClosure(struct hs_State* H, struct GcBcFunction* function) {
   struct GcUpvalue** upvalues = ALLOCATE(
       H, struct GcUpvalue*, function->upvalueCount);
   for (s32 i = 0; i < function->upvalueCount; i++) {
@@ -80,7 +80,7 @@ struct GcClosure* newClosure(struct hl_State* H, struct GcBcFunction* function) 
   return closure;
 }
 
-struct GcUpvalue* newUpvalue(struct hl_State* H, Value* slot) {
+struct GcUpvalue* newUpvalue(struct hs_State* H, Value* slot) {
   struct GcUpvalue* upvalue = ALLOCATE_OBJ(H, struct GcUpvalue, OBJ_UPVALUE);
   upvalue->location = slot;
   upvalue->closed = NEW_NIL;
@@ -88,7 +88,7 @@ struct GcUpvalue* newUpvalue(struct hl_State* H, Value* slot) {
   return upvalue;
 }
 
-struct GcBcFunction* newBcFunction(struct hl_State* H) {
+struct GcBcFunction* newBcFunction(struct hs_State* H) {
   struct GcBcFunction* function = ALLOCATE_OBJ(H, struct GcBcFunction, OBJ_FUNCTION);
   function->arity = 0;
   function->upvalueCount = 0;
@@ -103,7 +103,7 @@ struct GcBcFunction* newBcFunction(struct hl_State* H) {
   return function;
 }
 
-struct GcCFunction* newCFunction(struct hl_State* H, hl_CFunction cFunc, s32 argCount) {
+struct GcCFunction* newCFunction(struct hs_State* H, hs_CFunction cFunc, s32 argCount) {
   struct GcCFunction* cFunction = ALLOCATE_OBJ(
       H, struct GcCFunction, OBJ_CFUNCTION);
   cFunction->cFunc = cFunc;
@@ -111,7 +111,7 @@ struct GcCFunction* newCFunction(struct hl_State* H, hl_CFunction cFunc, s32 arg
   return cFunction;
 }
 
-static struct GcString* allocateString(struct hl_State* H, char* chars, s32 length, u32 hash) {
+static struct GcString* allocateString(struct hs_State* H, char* chars, s32 length, u32 hash) {
   struct GcString* string = ALLOCATE_OBJ(H, struct GcString, OBJ_STRING);
   string->length = length;
   string->chars = chars;
@@ -133,7 +133,7 @@ static u32 hashString(const char* key, int length) {
   return hash;
 }
 
-struct GcString* copyString(struct hl_State* H, const char* chars, s32 length) {
+struct GcString* copyString(struct hs_State* H, const char* chars, s32 length) {
   u32 hash = hashString(chars, length);
   struct GcString* interned = tableFindString(&H->strings, chars, length, hash);
   if (interned != NULL) {
@@ -145,7 +145,7 @@ struct GcString* copyString(struct hl_State* H, const char* chars, s32 length) {
   return allocateString(H, ownedChars, length, hash);
 }
 
-struct GcString* takeString(struct hl_State* H, char* chars, s32 length) {
+struct GcString* takeString(struct hs_State* H, char* chars, s32 length) {
   u32 hash = hashString(chars, length);
   struct GcString* interned = tableFindString(&H->strings, chars, length, hash);
   if (interned != NULL) {
@@ -155,7 +155,7 @@ struct GcString* takeString(struct hl_State* H, char* chars, s32 length) {
   return allocateString(H, chars, length, hash);
 }
 
-void writeBytecode(struct hl_State* H, struct GcBcFunction* function, u8 byte, s32 line) {
+void writeBytecode(struct hs_State* H, struct GcBcFunction* function, u8 byte, s32 line) {
   if (function->bcCapacity < function->bcCount + 1) {
     s32 oldCapacity = function->bcCapacity;
     function->bcCapacity = GROW_CAPACITY(oldCapacity);
@@ -169,7 +169,7 @@ void writeBytecode(struct hl_State* H, struct GcBcFunction* function, u8 byte, s
 }
 
 s32 addFunctionConstant(
-    struct hl_State* H, struct GcBcFunction* function, Value value) {
+    struct hs_State* H, struct GcBcFunction* function, Value value) {
   push(H, value);
   writeValueArray(H, &function->constants, value);
   pop(H);

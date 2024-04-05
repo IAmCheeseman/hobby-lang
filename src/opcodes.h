@@ -1,5 +1,5 @@
-#ifndef _HOBBYL_OPCODES
-#define _HOBBYL_OPCODES
+#ifndef _HOBBYSCRIPT_OPCODES
+#define _HOBBYSCRIPT_OPCODES
 
 enum Bytecode {
   BC_CONSTANT,
@@ -57,4 +57,4 @@ enum Bytecode {
   BC_BREAK,
 };
 
-#endif // _HOBBYL_OPCODES
+#endif // _HOBBYSCRIPT_OPCODES

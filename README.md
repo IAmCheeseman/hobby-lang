@@ -1,4 +1,4 @@
-# Hobby Lang
+# HobbyScript
 
 A dynamically typed programming language designed for use in game development.
 

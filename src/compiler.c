@@ -1339,7 +1339,7 @@ static void statement(struct Parser* parser) {
   }
 }
 
-struct GcBcFunction* compile(struct hl_State* H, struct Parser* parser, const char* source) {
+struct GcBcFunction* compile(struct hs_State* H, struct Parser* parser, const char* source) {
   parser->H = H;
   parser->compiler = NULL;
   parser->structCompiler = NULL;
@@ -1364,7 +1364,7 @@ struct GcBcFunction* compile(struct hl_State* H, struct Parser* parser, const ch
   return parser->hadError ? NULL : function;
 }
 
-void markCompilerRoots(struct hl_State* H, struct Parser* parser) {
+void markCompilerRoots(struct hs_State* H, struct Parser* parser) {
   if (parser == NULL) {
     return;
   }

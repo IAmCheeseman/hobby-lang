@@ -15,7 +15,7 @@
 
 #define GC_HEAP_GROW_FACTOR 2
 
-void* reallocate(struct hl_State* H, void* pointer, size_t oldSize, size_t newSize) {
+void* reallocate(struct hs_State* H, void* pointer, size_t oldSize, size_t newSize) {
   H->bytesAllocated += newSize - oldSize;
   if (newSize > oldSize) {
 #ifdef DEBUG_STRESS_GC
@@ -39,7 +39,7 @@ void* reallocate(struct hl_State* H, void* pointer, size_t oldSize, size_t newSi
   return newAllocation;
 }
 
-static void freeObject(struct hl_State* H, struct GcObj* object) {
+static void freeObject(struct hs_State* H, struct GcObj* object) {
 #ifdef DEBUG_LOG_GC
   printf("%p free type %d\n", (void*)object, object->type);
 #endif
@@ -107,7 +107,7 @@ static void freeObject(struct hl_State* H, struct GcObj* object) {
   }
 }
 
-void markObject(struct hl_State* H, struct GcObj* object) {
+void markObject(struct hs_State* H, struct GcObj* object) {
   if (object == NULL) {
     return;
   }
@@ -136,19 +136,19 @@ void markObject(struct hl_State* H, struct GcObj* object) {
   H->grayStack[H->grayCount++] = object;
 }
 
-void markValue(struct hl_State* H, Value value) {
+void markValue(struct hs_State* H, Value value) {
   if (IS_OBJ(value)) {
     markObject(H, AS_OBJ(value));
   }
 }
 
-static void markArray(struct hl_State* H, struct ValueArray* array) {
+static void markArray(struct hs_State* H, struct ValueArray* array) {
   for (s32 i = 0; i < array->count; i++) {
     markValue(H, array->values[i]);
   }
 }
 
-static void blackenObject(struct hl_State* H, struct GcObj* object) {
+static void blackenObject(struct hs_State* H, struct GcObj* object) {
 #ifdef DEBUG_LOG_GC
   printf("%p blacken ", (void*)object);
   printValue(NEW_OBJ(object));
@@ -211,7 +211,7 @@ static void blackenObject(struct hl_State* H, struct GcObj* object) {
   }
 }
 
-static void markRoots(struct hl_State* H) {
+static void markRoots(struct hs_State* H) {
   for (Value* slot = H->stack; slot < H->stackTop; slot++) {
     markValue(H, *slot);
   }
@@ -230,14 +230,14 @@ static void markRoots(struct hl_State* H) {
   markCompilerRoots(H, H->parser);
 }
 
-static void traceReferences(struct hl_State* H) {
+static void traceReferences(struct hs_State* H) {
   while (H->grayCount > 0) {
     struct GcObj* object = H->grayStack[--H->grayCount];
     blackenObject(H, object);
   }
 }
 
-static void sweep(struct hl_State* H) {
+static void sweep(struct hs_State* H) {
   struct GcObj* previous = NULL;
   struct GcObj* current = H->objects;
 
@@ -260,7 +260,7 @@ static void sweep(struct hl_State* H) {
   }
 }
 
-void collectGarbage(struct hl_State* H) {
+void collectGarbage(struct hs_State* H) {
 #ifdef DEBUG_LOG_GC
   printf("-- gc begin\n");
   size_t before = H->bytesAllocated;
@@ -280,7 +280,7 @@ void collectGarbage(struct hl_State* H) {
 #endif
 }
 
-void freeObjects(struct hl_State* H) {
+void freeObjects(struct hs_State* H) {
   struct GcObj* object = H->objects;
   while (object != NULL) {
     struct GcObj* next = object->next;
