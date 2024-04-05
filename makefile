@@ -16,7 +16,7 @@ ifndef PROFILE
 endif
 
 ifeq ($(PROFILE), debug)
-	CFLAGS += -O0 -g
+	CFLAGS += -O3 -g
 	ifneq ($(OS), windows)
 		CFLAGS += -fsanitize=address
 	endif
