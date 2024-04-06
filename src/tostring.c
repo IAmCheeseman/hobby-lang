@@ -12,6 +12,9 @@
 #define NUMBER_FORMAT "%.14g"
 
 static struct GcString* functionToString(struct hs_State* H, struct GcBcFunction* func) {
+  if (func->name == NULL) {
+    return copyString(H, "<script>", 8);
+  }
   return strFormat(H, "<function @>", func->name);
 }
 
@@ -32,10 +35,10 @@ struct GcString* toString(struct hs_State* H, Value value) {
     return strFormat(H, "<@>", AS_ENUM(value)->name);
   } else if (IS_FUNCTION(value)) {
     return functionToString(H, AS_FUNCTION(value));
-  // } else if (IS_CLOSURE(value)) {
-  //   return functionToString(H, AS_CLOSURE(value)->function);
-  // } else if (IS_BOUND_METHOD(value)) {
-  //   return functionToString(H, AS_BOUND_METHOD(value)->method->function);
+  } else if (IS_CLOSURE(value)) {
+    return functionToString(H, AS_CLOSURE(value)->function);
+  } else if (IS_BOUND_METHOD(value)) {
+    return functionToString(H, AS_BOUND_METHOD(value)->method->function);
   } else if (IS_CFUNCTION(value)) {
     return copyString(H, "<cfunction>", 11);
   } else if (IS_UPVALUE(value)) {

@@ -10,7 +10,7 @@ static void core_print(struct hs_State* H, UNUSED s32 argCount) {
     size_t length;
     const char* str = hs_toString(H, i, &length);
     fwrite(str, sizeof(char), length, stdout);
-    if (i != argCount - 1) {
+    if (i != argCount) {
       putc('\t', stdout);
     }
   }

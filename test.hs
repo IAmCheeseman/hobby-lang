@@ -1,6 +1,9 @@
-var arr = [];
+struct Foo {
+  func bar {}
+}
+func test() {}
 
-var s = input();
+var foo = Foo {};
 
-arr.push(s);
-print(arr[0]);
+print(test);
+print(foo.bar);
