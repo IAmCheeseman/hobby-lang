@@ -6,7 +6,6 @@
 
 #include "memory.h"
 #include "table.h"
-#include "vm.h"
 #include "state.h"
 
 #define ALLOCATE_OBJ(H, type, objectType) \

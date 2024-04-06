@@ -15,34 +15,32 @@ static struct GcString* functionToString(struct hs_State* H, struct GcBcFunction
   return strFormat(H, "<function @>", func->name);
 }
 
-struct GcString* toString(struct hs_State* H, Value* value) {
-  if (value == NULL) {
-    return copyString(H, "Null", 4);
-  }
-
-  if (IS_STRING(*value)) {
-    return AS_STRING(*value);
-  } else if (IS_NUMBER(*value)) {
-    return numToString(H, AS_NUMBER(*value));
-  } else if (IS_BOOL(*value)) {
-    return boolToString(H, AS_BOOL(*value));
-  } else if (IS_NIL(*value)) {
+struct GcString* toString(struct hs_State* H, Value value) {
+  if (IS_STRING(value)) {
+    return AS_STRING(value);
+  } else if (IS_NUMBER(value)) {
+    return numToString(H, AS_NUMBER(value));
+  } else if (IS_BOOL(value)) {
+    return boolToString(H, AS_BOOL(value));
+  } else if (IS_NIL(value)) {
     return copyString(H, "nil", 3);
-  } else if (IS_INSTANCE(*value)) {
-    return strFormat(H, "<@ instance>", AS_INSTANCE(*value)->strooct->name);
-  } else if (IS_STRUCT(*value)) {
-    return strFormat(H, "<@>", AS_STRUCT(*value)->name);
-  } else if (IS_ENUM(*value)) {
-    return strFormat(H, "<@>", AS_ENUM(*value)->name);
-  } else if (IS_FUNCTION(*value)) {
-    return functionToString(H, AS_FUNCTION(*value));
-  } else if (IS_CLOSURE(*value)) {
-    return functionToString(H, AS_CLOSURE(*value)->function);
-  } else if (IS_BOUND_METHOD(*value)) {
-    return functionToString(H, AS_BOUND_METHOD(*value)->method->function);
-  } else if (IS_UPVALUE(*value)) {
+  } else if (IS_INSTANCE(value)) {
+    return strFormat(H, "<@ instance>", AS_INSTANCE(value)->strooct->name);
+  } else if (IS_STRUCT(value)) {
+    return strFormat(H, "<@>", AS_STRUCT(value)->name);
+  } else if (IS_ENUM(value)) {
+    return strFormat(H, "<@>", AS_ENUM(value)->name);
+  } else if (IS_FUNCTION(value)) {
+    return functionToString(H, AS_FUNCTION(value));
+  // } else if (IS_CLOSURE(value)) {
+  //   return functionToString(H, AS_CLOSURE(value)->function);
+  // } else if (IS_BOUND_METHOD(value)) {
+  //   return functionToString(H, AS_BOUND_METHOD(value)->method->function);
+  } else if (IS_CFUNCTION(value)) {
+    return copyString(H, "<cfunction>", 11);
+  } else if (IS_UPVALUE(value)) {
     return copyString(H, "<upvalue>", 9);
-  } else if (IS_ARRAY(*value)) {
+  } else if (IS_ARRAY(value)) {
     return copyString(H, "<array>", 7);
   }
 

@@ -19,7 +19,7 @@ void resetStack(struct hs_State* H) {
 
 static Value* getValueAt(struct hs_State* H, s32 index) {
   if (index >= 0) {
-    Value* value = H->frames[H->frameCount - 1].slots + index + 1;
+    Value* value = H->frames[H->frameCount - 1].slots + index;
     return (value > H->stackTop) ? NULL : value;
   }
 
@@ -41,8 +41,10 @@ struct hs_State* hs_newState() {
   resetStack(H);
   initTable(&H->strings);
   initTable(&H->globals);
+  initTable(&H->arrayMethods);
 
   openCore(H);
+  openArray(H);
 
   return H;
 }
@@ -50,10 +52,16 @@ struct hs_State* hs_newState() {
 void hs_freeState(struct hs_State* H) {
   freeTable(H, &H->strings);
   freeTable(H, &H->globals);
+  freeTable(H, &H->arrayMethods);
   freeObjects(H);
   FREE(H, struct Parser, H->parser);
 
   free(H);
+}
+
+void hs_push(struct hs_State* H, int index) {
+  // handle NULL deref here
+  push(H, *getValueAt(H, index));
 }
 
 void hs_pop(struct hs_State* H) {
@@ -106,6 +114,14 @@ bool hs_isString(struct hs_State* H, int index) {
   return IS_STRING(*v);
 }
 
+bool hs_isArray(struct hs_State* H, int index) {
+  Value* v = getValueAt(H, index);
+  if (v == NULL) {
+    return false;
+  }
+  return IS_ARRAY(*v);
+}
+
 const char* hs_toString(struct hs_State* H, int index, size_t* length) {
   Value* v = getValueAt(H, index);
   if (v == NULL) {
@@ -115,9 +131,20 @@ const char* hs_toString(struct hs_State* H, int index, size_t* length) {
     return NULL;
   }
 
-  struct GcString* str = toString(H, v);
+  struct GcString* str = toString(H, *v);
   if (length != NULL) {
     *length = str->length;
   }
   return str->chars;
+}
+
+void hs_pushArray(struct hs_State* H, int index) {
+  Value* v = getValueAt(H, index);
+  if (v == NULL) {
+    return;
+  }
+
+  struct GcArray* array = AS_ARRAY(*v);
+  writeValueArray(H, &array->values, peek(H, 0));
+  pop(H);
 }

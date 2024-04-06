@@ -114,20 +114,33 @@ static bool invokeFromStruct(
 
 static bool invoke(struct hs_State* H, struct GcString* name, s32 argCount) {
   Value receiver = peek(H, argCount);
-  if (!IS_INSTANCE(receiver)) {
-    runtimeError(H, "Only instances have methods.");
-    return false;
+  switch (OBJ_TYPE(receiver)) {
+    case OBJ_INSTANCE: {
+      struct GcInstance* instance = AS_INSTANCE(receiver);
+
+      Value value;
+      if (tableGet(&instance->fields, name, &value)) {
+        H->stackTop[-argCount - 1] = value;
+        return callValue(H, value, argCount);
+      }
+
+      return invokeFromStruct(H, instance->strooct, name, argCount);
+    }
+    case OBJ_ARRAY: {
+      Value value;
+      if (tableGet(&H->arrayMethods, name, &value)) {
+        H->stackTop[-argCount - 1] = receiver;
+        return callValue(H, value, argCount);
+      }
+
+      runtimeError(H, "Array does not contain method '%s'.", name->chars);
+    }
+    default:
+      break;
   }
 
-  struct GcInstance* instance = AS_INSTANCE(receiver);
-
-  Value value;
-  if (tableGet(&instance->fields, name, &value)) {
-    H->stackTop[-argCount - 1] = value;
-    return callValue(H, value, argCount);
-  }
-
-  return invokeFromStruct(H, instance->strooct, name, argCount);
+  runtimeError(H, "Invalid target to call.");
+  return false;
 }
 
 static bool bindMethod(struct hs_State* H, struct GcStruct* strooct, struct GcString* name) {

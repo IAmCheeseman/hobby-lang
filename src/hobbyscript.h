@@ -21,6 +21,7 @@ struct hs_FuncInfo {
 struct hs_State* hs_newState();
 void hs_freeState(struct hs_State* state);
 
+void hs_push(struct hs_State* H, int index);
 void hs_pop(struct hs_State* H);
 
 void hs_setGlobal(struct hs_State* H, const char* name);
@@ -34,7 +35,10 @@ void hs_pushOwnedString(struct hs_State* H, char* str, size_t length);
 void hs_pushCFunction(struct hs_State* H, hs_CFunction function, int argCount);
 
 bool hs_isString(struct hs_State* H, int index);
+bool hs_isArray(struct hs_State* H, int index);
 
 const char* hs_toString(struct hs_State* H, int index, size_t* length);
+
+void hs_pushArray(struct hs_State* H, int index);
 
 #endif // _HOBBYLANG_H

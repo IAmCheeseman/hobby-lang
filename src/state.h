@@ -21,6 +21,7 @@ struct hs_State {
   Value* stackTop;
   struct Table globals;
   struct Table strings;
+  struct Table arrayMethods;
   struct GcUpvalue* openUpvalues;
 
   size_t bytesAllocated;

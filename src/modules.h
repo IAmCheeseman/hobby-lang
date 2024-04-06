@@ -5,5 +5,6 @@
 #include "hobbyscript.h"
 
 void openCore(struct hs_State* H);
+void openArray(struct hs_State* H);
 
 #endif // _HOBBYSCRIPT_MODULES_H

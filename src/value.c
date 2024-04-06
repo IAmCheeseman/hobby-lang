@@ -59,7 +59,7 @@ void freeValueArray(struct hs_State* H, struct ValueArray* array) {
 }
 
 void printValue(struct hs_State* H, Value value) {
-  struct GcString* str = toString(H, &value);
+  struct GcString* str = toString(H, value);
   fwrite(str->chars, sizeof(char), str->length, stdout);
 }
 

@@ -6,7 +6,7 @@
 #include <time.h>
 
 static void core_print(struct hs_State* H, UNUSED s32 argCount) {
-  for (s32 i = 0; i < argCount; i++) {
+  for (s32 i = 1; i <= argCount; i++) {
     size_t length;
     const char* str = hs_toString(H, i, &length);
     fwrite(str, sizeof(char), length, stdout);
@@ -39,7 +39,7 @@ static void core_input(struct hs_State* H, UNUSED s32 argCount) {
 
 static void core_toString(struct hs_State* H, UNUSED s32 argCount) {
   size_t length;
-  const char* str = hs_toString(H, 0, &length);
+  const char* str = hs_toString(H, 1, &length);
   hs_pushString(H, str, length);
 }
 

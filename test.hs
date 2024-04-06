@@ -1,3 +1,6 @@
-print("WHAT NAME");
-var name = input();
-print("HELLO, " .. name .. "!!!");
+var arr = [];
+
+var s = input();
+
+arr.push(s);
+print(arr[0]);
